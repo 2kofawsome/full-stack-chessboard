@@ -1,7 +1,25 @@
 # full-stack-chessboard
 
+Next Tasks:
 
-- Fixing documentation and code convention clean up
+- Fix documentation and code convention clean up
+
+- Change SimpleMFRC522 to make it not wait on read()
+
+- Add file management
+
+- Listen for buttons/switches
+
+- Set difficulties
+
+- Various brains of the program
+
+- Wait for more packages to arrive
+
+
+
+
+
 
 
 

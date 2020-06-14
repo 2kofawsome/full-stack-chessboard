@@ -6,42 +6,58 @@ gpio.setwarnings(False)
 gpio.setmode(gpio.BOARD)
 reader = SimpleMFRC522()
 
-class LEDBar():
+class the74HC595():
 
     def __init__(self):
-        LEDBar.data = 11 #DS
-        LEDBar.parallel = 12 #ST_CP
-        LEDBar.serial = 13 #SH_CP
-        self.setupboard()
+        the74HC595.data = 11 #DS
+        the74HC595.parallel = 12 #ST_CP
+        the74HC595.serial = 13 #SH_CP
+        self._setupboard()
         self.clear()
 
-    def setupboard(self):
-        gpio.setup(LEDBar.data, gpio.OUT)
-        gpio.output(LEDBar.data, gpio.LOW)
-        gpio.setup(LEDBar.parallel, gpio.OUT)
-        gpio.output(LEDBar.parallel, gpio.LOW)
-        gpio.setup(LEDBar.serial, gpio.OUT)
-        gpio.output(LEDBar.serial, gpio.LOW)
+    def _setupboard(self):
+        gpio.setup(the74HC595.data, gpio.OUT)
+        gpio.output(the74HC595.data, gpio.LOW)
+        gpio.setup(the74HC595.parallel, gpio.OUT)
+        gpio.output(the74HC595.parallel, gpio.LOW)
+        gpio.setup(the74HC595.serial, gpio.OUT)
+        gpio.output(the74HC595.serial, gpio.LOW)
 
-    def output(self): #ST_CP
-        gpio.output(LEDBar.parallel, gpio.HIGH)
-        gpio.output(LEDBar.parallel, gpio.LOW)
+    def _output(self): #ST_CP
+        gpio.output(the74HC595.parallel, gpio.HIGH)
+        gpio.output(the74HC595.parallel, gpio.LOW)
 
-    def tick(self): #SH_CP
-        gpio.output(LEDBar.serial, gpio.HIGH)
-        gpio.output(LEDBar.serial, gpio.LOW)
+    def _tick(self): #SH_CP
+        gpio.output(the74HC595.serial, gpio.HIGH)
+        gpio.output(the74HC595.serial, gpio.LOW)
 
     def clear(self): #SH_CP
+        """
+        Sets the 74HC595 back to all off
+        Sets both specified GPIOs off
+
+        Returns: None
+
+        """
         self.setvalue([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
     def setvalue(self, value):
+        """
+        Sets the 74HC595 to values specified in the list, either 1 (on) or 0 (off)
+        Sets 2 the two GPIOs before and after 74HC595 to on or off
+
+        args: [0, 1, 0,...] (10 values)
+
+        Returns: None
+
+        """
         for n in value[1:-1]:
             if n == 0:
-                gpio.output(LEDBar.data, gpio.LOW)
+                gpio.output(the74HC595.data, gpio.LOW)
             else:
-                gpio.output(LEDBar.data, gpio.HIGH)
-            LEDBar.tick(self)
-        self.output()
+                gpio.output(the74HC595.data, gpio.HIGH)
+            the74HC595._tick(self)
+        self._output()
         if value[0] == 1: #Other pin
             pass
         else:
@@ -51,7 +67,7 @@ class LEDBar():
         else:
             pass
 
-class MFRC522():
+class theMFRC522():
     def test(self):
         reader = SimpleMFRC522()
         try:

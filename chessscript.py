@@ -59,7 +59,7 @@ def getfen():
     return grid
 
 alphabet = list(string.ascii_lowercase)
-LEDbar = hardwarescripts.LEDBar()
+LEDbar = hardwarescripts.the74HC595()
 
 stockfish = Stockfish("/home/pi/full-stack-chessboard/stockfish", depth=8)
 stockfish.set_fen_position("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
@@ -69,5 +69,5 @@ time.sleep(1)
 LEDbar.clear()
 updateboard()
 
-test = hardwarescripts.MFRC522()
-test.test()
+RFID = hardwarescripts.theMFRC522()
+RFID.test()
