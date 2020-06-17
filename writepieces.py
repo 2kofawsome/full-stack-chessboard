@@ -19,7 +19,7 @@ def writeall():
 	for n in pieces.keys():
 		print("Scan your " + str(pieces[n]))
 		while True:
-			reader.write(n)
+			reader.write(n+"\n\n\nProject on github @ full-stack-chessboard")
 			print("next?", end = "")
 			if input() != "":
 				break
@@ -32,7 +32,7 @@ def writecustom():
 	White are capital (P, K, Q)
 	Black are lowercase (p, k, q)
 	
-"""))
+""")[0]+"\n\n\nProject on github @ full-stack-chessboard")
 	print("Done\n")
 
 def readall():

@@ -4,8 +4,6 @@ Next Tasks:
 
 - Fix documentation and code convention clean up
 
-- Change SimpleMFRC522 to make it not wait on read()
-
 - Add file management
 
 - Listen for buttons/switches

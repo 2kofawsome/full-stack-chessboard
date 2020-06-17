@@ -1,10 +1,8 @@
 import time
 import RPi.GPIO as gpio
-from mfrc522 import SimpleMFRC522
 
 gpio.setwarnings(False)
 gpio.setmode(gpio.BOARD)
-reader = SimpleMFRC522()
 
 class the74HC595():
 
@@ -66,15 +64,3 @@ class the74HC595():
             pass
         else:
             pass
-
-class theMFRC522():
-    def test(self):
-        reader = SimpleMFRC522()
-        try:
-            id, text = reader.read()
-            print("RFID:", id, text)
-        finally:
-            gpio.cleanup()
-
-    if __name__ == '__main__':
-        test()
