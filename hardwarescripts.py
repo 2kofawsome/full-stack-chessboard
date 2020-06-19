@@ -4,12 +4,12 @@ import RPi.GPIO as gpio
 gpio.setwarnings(False)
 gpio.setmode(gpio.BOARD)
 
-class the74HC595():
 
+class the74HC595:
     def __init__(self):
-        the74HC595.data = 11 #DS
-        the74HC595.parallel = 12 #ST_CP
-        the74HC595.serial = 13 #SH_CP
+        the74HC595.data = 11  # DS
+        the74HC595.parallel = 12  # ST_CP
+        the74HC595.serial = 13  # SH_CP
         self._setupboard()
         self.clear()
 
@@ -21,15 +21,15 @@ class the74HC595():
         gpio.setup(the74HC595.serial, gpio.OUT)
         gpio.output(the74HC595.serial, gpio.LOW)
 
-    def _output(self): #ST_CP
+    def _output(self):  # ST_CP
         gpio.output(the74HC595.parallel, gpio.HIGH)
         gpio.output(the74HC595.parallel, gpio.LOW)
 
-    def _tick(self): #SH_CP
+    def _tick(self):  # SH_CP
         gpio.output(the74HC595.serial, gpio.HIGH)
         gpio.output(the74HC595.serial, gpio.LOW)
 
-    def clear(self): #SH_CP
+    def clear(self):  # SH_CP
         """
         Sets the 74HC595 back to all off
         Sets both specified GPIOs off
@@ -56,11 +56,11 @@ class the74HC595():
                 gpio.output(the74HC595.data, gpio.HIGH)
             the74HC595._tick(self)
         self._output()
-        if value[0] == 1: #Other pin
+        if value[0] == 1:  # Other pin
             pass
         else:
             pass
-        if value[-1] == 1: #Other pin
+        if value[-1] == 1:  # Other pin
             pass
         else:
             pass
