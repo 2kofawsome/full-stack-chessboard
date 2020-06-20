@@ -1,14 +1,21 @@
+<p>
+    <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.6+-blue.svg" alt="Python version" height="17"></a>
+    <a href="https://github.com/psf/black">
+        <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Codestyle Black" height="17">
+    </a>
+</p>
+
 # full-stack-chessboard
 
 Next Tasks:
 
-- User abilities:
+- Flow of user experience
 
-- Listen for buttons/switches
+- Stockfish difficulties (Stockfish levels + stockfish time)
+
+- Checkmates, game end, game restart, etc
 
 - Wait for more packages to arrive in the mail!
-
-- Evaluation/Hardware output
 
 <br>
 

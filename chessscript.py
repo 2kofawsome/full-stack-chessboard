@@ -4,7 +4,6 @@ import RPi.GPIO as gpio
 from mfrc522 import SimpleMFRC522
 import hardwarescripts
 
-
 def togrid(
     fen,
 ):  # FEN without information at the end, eg "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
@@ -15,8 +14,6 @@ def togrid(
         "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR"
     returns: grid[0]
         [['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'], ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'], ['', '', '', '', '', '', '', ''], ['', '', '', '', '', '', '', ''], ['', '', '', '', 'P', '', '', ''], ['', '', '', '', '', '', '', ''], ['P', 'P', 'P', 'P', '', 'P', 'P', 'P'], ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']]
-
-
     """
     grid = []
     fen = fen.split("/")
@@ -41,7 +38,6 @@ def tofen(grid):
         [['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'], ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'], ['', '', '', '', '', '', '', ''], ['', '', '', '', '', '', '', ''], ['', '', '', '', 'P', '', '', ''], ['', '', '', '', '', '', '', ''], ['P', 'P', 'P', 'P', '', 'P', 'P', 'P'], ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']]
     returns: fen[0]
         "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR"
-
     """
     fen = ""
 
@@ -237,33 +233,80 @@ def updateboard():
     """
     Unknown
 
-    args:
-    returns:
+    args: None
+    returns: None
 
     """
     # figure out what board/move makes sense from hardware
 
-    ### At this point it is alegraic notation
-    example = ["e2", "e4"]
+    example = ["e8", "f8"]
 
+    test = example # special for castling
+    if test == "0-0":
+        if fen[1] == "b":
+            test = ["e8", "h8"]
+        else:
+            test = ["e1", "h1"]
+    elif test == "0-0-0":
+        if fen[1] == "b":
+            test = ["e8", "a8"]
+        else:
+            test = ["e1", "a1"]
     if not stockfish.is_move_correct(
-        "".join(example)
-    ):  # special for castling, just king movement
-        # do somethign if move not valid
+        "".join(test)
+    ):
+        # do something if move not valid
         pass
 
     fen = updatefen(example)
     updatepgn(example)
     stockfish.set_fen_position(fen)
 
+    evaluation = stockfish.get_evaluation()
+    if evaluation["type"] == "mate":
+        if evaluation["value"] < 5:
+            if fen[1] == "b":
+                led = [0,0,0,0,0,0,0,0,0,1]
+            else:
+                led = [0,1,1,1,1,1,1,1,1,1]
+        else:
+            if fen[1] == "b":
+                led = [0,0,0,0,0,0,0,0,1,1]
+            else:
+                led = [0,0,1,1,1,1,1,1,1,1]
+    else:
+        if evaluation["value"] >= 1000:
+            led = [0,0,1,1,1,1,1,1,1,1]
+        elif evaluation["value"] < 1000 and evaluation["value"] >= 500:
+            led = [0,0,0,1,1,1,1,1,1,1]
+        elif evaluation["value"] < 500 and evaluation["value"] >= 100:
+            led = [0,0,0,0,1,1,1,1,1,1]
+        elif evaluation["value"] < 100 and evaluation["value"] > -100:
+            led = [0,0,0,0,0,1,1,1,1,1]
+        elif evaluation["value"] <= -100 and evaluation["value"] > -500:
+            led = [0,0,0,0,0,0,1,1,1,1]
+        elif evaluation["value"] <= -500 and evaluation["value"] > -1000:
+            led = [0,0,0,0,0,0,0,1,1,1]
+        elif evaluation["value"] <= -1000:
+            led = [0,0,0,0,0,0,0,0,1,1]
+
+    LEDbar.setvalue(led)
+    print(evaluation)
+
+
     # check best move (skip if players turn)
+
     # send to hardware
 
-    # check evaluation
-    LEDbar.setvalue([1, 1, 1, 1, 0, 0, 1, 0, 1, 1])
-    time.sleep(1)
-    LEDbar.clear()
-
+def singleplayer():
+    pass
+    # make it single player
+def multiplayer():
+    pass
+    # make it multi player
+def boardoff():
+    pass
+    # shut down procedure + edit game to say terminated part way through
 
 def main():  # this should loop
     """
@@ -273,11 +316,20 @@ def main():  # this should loop
     returns:
 
     """
-    # Tracks 2 buttons
-    button1 = False
-    if button1 == True:
+
+    # switch for LED is hardware only (no software)
+
+    gpio.add_event_detect(37, gpio.RISING, callback=singleplayer) # single/multi switch
+    gpio.add_event_detect(37, gpio.FALLING, callback=multiplayer)
+
+    gpio.add_event_detect(37, gpio.RISING) # Button 1
+    gpio.event_detected(37) # True or False
+    gpio.add_event_detect(37, gpio.RISING) # Button 2
+    if gpio.event_detected(37): # True or False
         print(RFID.read_no_block())
-    # Tracks 3 switches
+
+    gpio.add_event_detect(37, gpio.RISING, callback=boardoff)
+
     # Tracks board/reed switch movements
 
     # once player turn is determined
@@ -313,7 +365,7 @@ def startup():
     saved.close()
 
     stockfish.set_fen_position(
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        "r2qk2r/pppppbpp/8/3B4/3PP3/2P1QP2/PP4PP/4K2R b kq - 0 1"
     )
 
     main()

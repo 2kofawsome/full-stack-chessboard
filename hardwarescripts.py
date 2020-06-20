@@ -8,8 +8,10 @@ gpio.setmode(gpio.BOARD)
 class the74HC595:
     def __init__(self):
         the74HC595.data = 11  # DS
-        the74HC595.parallel = 12  # ST_CP
-        the74HC595.serial = 13  # SH_CP
+        the74HC595.parallel = 13  # ST_CP
+        the74HC595.serial = 15  # SH_CP
+        the74HC595.first = 16 # 74HC595 is not long enough for all LED bars
+        the74HC595.last = 18
         self._setupboard()
         self.clear()
 
@@ -20,6 +22,10 @@ class the74HC595:
         gpio.output(the74HC595.parallel, gpio.LOW)
         gpio.setup(the74HC595.serial, gpio.OUT)
         gpio.output(the74HC595.serial, gpio.LOW)
+        gpio.setup(the74HC595.first, gpio.OUT)
+        gpio.output(the74HC595.first, gpio.LOW)
+        gpio.setup(the74HC595.last, gpio.OUT)
+        gpio.output(the74HC595.last, gpio.LOW)
 
     def _output(self):  # ST_CP
         gpio.output(the74HC595.parallel, gpio.HIGH)
@@ -56,11 +62,11 @@ class the74HC595:
                 gpio.output(the74HC595.data, gpio.HIGH)
             the74HC595._tick(self)
         self._output()
-        if value[0] == 1:  # Other pin
-            pass
+        if value[0] == 1:
+            gpio.output(the74HC595.first, gpio.HIGH)
         else:
-            pass
-        if value[-1] == 1:  # Other pin
-            pass
+            gpio.output(the74HC595.first, gpio.LOW)
+        if value[-1] == 1:
+            gpio.output(the74HC595.last, gpio.HIGH)
         else:
-            pass
+            gpio.output(the74HC595.last, gpio.LOW)
