@@ -61,7 +61,7 @@ def updatepgn(algebraic):
     Updates and saves PGN based on a valid move
 
     args: algebraic move
-        ["e2", "e4"] or ["0-0-0"]
+        ["e2", "e4"]
     returns: None
     """
     fen = stockfish.get_fen_position()
@@ -73,39 +73,44 @@ def updatepgn(algebraic):
     if fen[1] == "w":
         saved.write(fen[5] + ". ")
 
-    if algebraic[0] == "O-O-O" or algebraic[0] == "O-O":
-        saved.write(algebraic[0])
+    grid = togrid(fen[0])
 
+    last = grid[int(algebraic[0][1]) - 1][alphabet.index(algebraic[0][0])]
+    next = grid[int(algebraic[1][1]) - 1][alphabet.index(algebraic[1][0])]
+
+
+    if last.upper() == "K" and algebraic[0][0] == "e" and algebraic[1][0] == "g": #castling
+        saved.write("O-O")
+    elif last.upper() == "K" and algebraic[0][0] == "e" and algebraic[1][0] == "c":
+        saved.write("O-O-O")
     else:
-        grid = togrid(fen[0])
-        last = grid[int(algebraic[0][1]) - 1][alphabet.index(algebraic[0][0])]
-        next = grid[int(algebraic[1][1]) - 1][alphabet.index(algebraic[1][0])]
-
         if last != "p" and last != "P":
             saved.write(last.upper())
 
-        possibilities = []
-        for n in range(8):
-            for m in range(8):
-                if grid[n][m] == last:
-                    possibilities.append(alphabet[m] + str(n + 1))
-        possibilities.remove(algebraic[0])
-        conflicting = []
-        for n in possibilities:
-            if stockfish.is_move_correct(n + algebraic[1]):
-                conflicting.append(n)
-        add = "  "
-        for n in conflicting:
-            if algebraic[0][0] != n[0] and (add[1] == " " or add[1] == n[1]):  # letter
-                add = algebraic[0][0] + add[1]
-            elif algebraic[0][1] != n[1] and (
-                add[0] == " " or add[0] == n[0]
-            ):  # number
-                add = add[0] + algebraic[0][1]
-        add = add.replace(" ", "")
-        saved.write(add)
+            possibilities = []
+            for n in range(8):
+                for m in range(8):
+                    if grid[n][m] == last:
+                        possibilities.append(alphabet[m] + str(n + 1))
+            possibilities.remove(algebraic[0])
+            conflicting = []
+            for n in possibilities:
+                if stockfish.is_move_correct(n + algebraic[1]):
+                    conflicting.append(n)
+            add = "  "
+            for n in conflicting:
+                if algebraic[0][0] != n[0] and (add[1] == " " or add[1] == n[1]):  # letter
+                    add = algebraic[0][0] + add[1]
+                elif algebraic[0][1] != n[1] and (
+                        add[0] == " " or add[0] == n[0]
+                ):  # number
+                    add = add[0] + algebraic[0][1]
+            add = add.replace(" ", "")
+            saved.write(add)
 
         if next != "":
+            if last == "p" or last == "P":
+                saved.write(algebraic[0][0])
             saved.write("x")
 
         saved.write(algebraic[1])
@@ -119,7 +124,7 @@ def updatefen(algebraic):
     Updates current fen position based on a valid move
 
     args: algebraic move
-        ["e2", "e4"] or "0-0-0"
+        ["e2", "e4"]
     returns: fen
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     """
@@ -128,92 +133,59 @@ def updatefen(algebraic):
 
     grid = togrid(fen[0])
 
-    if algebraic[0] == "O-O-O" or algebraic[0] == "O-O":
-        # 3 castling "KQkq"
-        if fen[1] == "b":
-            fen[2] = fen[2].replace("q", "")
-            fen[2] = fen[2].replace("k", "")
-        elif fen[1] == "w":
-            fen[2] = fen[2].replace("Q", "")
-            fen[2] = fen[2].replace("K", "")
-        if fen[2] == "":
-            fen[2] = "-"
+    last = grid[int(algebraic[0][1]) - 1][alphabet.index(algebraic[0][0])]
+    next = grid[int(algebraic[1][1]) - 1][alphabet.index(algebraic[1][0])]
 
-        # 4 en passent
+    # 3 castling "KQkq"
+    if last == "k":
+        fen[2] = fen[2].replace("k", "")
+        fen[2] = fen[2].replace("q", "")
+    elif last == "K":
+        fen[2] = fen[2].replace("K", "")
+        fen[2] = fen[2].replace("Q", "")
+    elif last == "r":
+        if algebraic[0][0] == "a":
+            fen[2] = fen[2].replace("q", "")
+        elif algebraic[0][0] == "h":
+            fen[2] = fen[2].replace("k", "")
+    elif last == "R":
+        if algebraic[0][0] == "a":
+            fen[2] = fen[2].replace("Q", "")
+        elif algebraic[0][0] == "h":
+            fen[2] = fen[2].replace("K", "")
+    if fen[2] == "":
+        fen[2] = "-"
+
+    # 4 en passent
+    if (last == "P" or last == "p") and abs(
+        int(algebraic[0][1]) - int(algebraic[1][1])
+    ) == 2:
+        fen[3] = algebraic[0][0] + str(
+            int((int(algebraic[0][1]) + int(algebraic[1][1])) / 2)
+        )
+    else:
         fen[3] = "-"
 
-        # 5 half moves since last capture or pawn movement
+    # 5 half moves since last capture or pawn movement
+    if last == "P" or last == "p" or next != "":
+        fen[4] = "0"
+    else:
         fen[4] = str(int(fen[4]) + 1)
 
-        # 1 moves
-        if fen[1] == "w":
-            if algebraic[0] == "O-O":
-                grid[0][4] = ""
-                grid[0][5] = "R"
-                grid[0][6] = "K"
-                grid[0][7] = ""
-            elif algebraic[0] == "O-O-O":
-                grid[0][0] = ""
-                grid[0][2] = "K"
-                grid[0][3] = "R"
-                grid[0][4] = ""
-        if fen[1] == "b":
-            if algebraic[0] == "O-O":
-                grid[7][4] = ""
-                grid[7][5] = "r"
-                grid[7][6] = "k"
-                grid[7][7] = ""
-            elif algebraic[0] == "O-O-O":
-                grid[7][0] = ""
-                grid[7][2] = "k"
-                grid[7][3] = "r"
-                grid[7][4] = ""
-        fen[0] = tofen(grid)
-
-    else:
-        last = grid[int(algebraic[0][1]) - 1][alphabet.index(algebraic[0][0])]
-        next = grid[int(algebraic[1][1]) - 1][alphabet.index(algebraic[1][0])]
-
-        # 3 castling "KQkq"
-        if last == "k":
-            fen[2] = fen[2].replace("k", "")
-            fen[2] = fen[2].replace("q", "")
-        elif last == "K":
-            fen[2] = fen[2].replace("K", "")
-            fen[2] = fen[2].replace("Q", "")
-        elif last == "r":
-            if algebraic[0][0] == "a":
-                fen[2] = fen[2].replace("q", "")
-            elif algebraic[0][0] == "h":
-                fen[2] = fen[2].replace("k", "")
-        elif last == "R":
-            if algebraic[0][0] == "a":
-                fen[2] = fen[2].replace("Q", "")
-            elif algebraic[0][0] == "h":
-                fen[2] = fen[2].replace("K", "")
-        if fen[2] == "":
-            fen[2] = "-"
-
-        # 4 en passent
-        if (last == "P" or last == "p") and abs(
-            int(algebraic[0][1]) - int(algebraic[1][1])
-        ) == 2:
-            fen[3] = algebraic[0][0] + str(
-                int((int(algebraic[0][1]) + int(algebraic[1][1])) / 2)
-            )
-        else:
-            fen[3] = "-"
-
-        # 5 half moves since last capture or pawn movement
-        if last == "P" or last == "p" or next != "":
-            fen[4] = "0"
-        else:
-            fen[4] = str(int(fen[4]) + 1)
-
-        # 1 moves
-        grid[int(algebraic[1][1]) - 1][alphabet.index(algebraic[1][0])] = last
-        grid[int(algebraic[0][1]) - 1][alphabet.index(algebraic[0][0])] = ""
-        fen[0] = tofen(grid)
+    # 1 moves
+    grid[int(algebraic[1][1]) - 1][alphabet.index(algebraic[1][0])] = last
+    grid[int(algebraic[0][1]) - 1][alphabet.index(algebraic[0][0])] = ""
+    if last == "K":
+        if algebraic[0][0] == "e" and algebraic[1][0] == "g":
+            grid[0][5] = "R"
+        elif algebraic[0][0] == "e" and algebraic[1][0] == "c":
+            grid[0][3] = "R"
+    elif last == "k":
+        if algebraic[0][0] == "e" and algebraic[1][0] == "g":
+            grid[7][5] = "r"
+        elif algebraic[0][0] == "e" and algebraic[1][0] == "c":
+            grid[7][3] = "r"
+    fen[0] = tofen(grid)
 
     # 6 incremented after blacks move
     if fen[1] == "b":
@@ -229,37 +201,18 @@ def updatefen(algebraic):
     return fen
 
 
-def updateboard():
+def updateboard(algebraic):
     """
     Unknown
 
-    args: None
+    args: algebraic move
+        ["e2", "e4"]
     returns: None
 
     """
-    # figure out what board/move makes sense from hardware
 
-    example = ["e8", "f8"]
-
-    test = example # special for castling
-    if test == "0-0":
-        if fen[1] == "b":
-            test = ["e8", "h8"]
-        else:
-            test = ["e1", "h1"]
-    elif test == "0-0-0":
-        if fen[1] == "b":
-            test = ["e8", "a8"]
-        else:
-            test = ["e1", "a1"]
-    if not stockfish.is_move_correct(
-        "".join(test)
-    ):
-        # do something if move not valid
-        pass
-
-    fen = updatefen(example)
-    updatepgn(example)
+    fen = updatefen(algebraic)
+    updatepgn(algebraic)
     stockfish.set_fen_position(fen)
 
     evaluation = stockfish.get_evaluation()
@@ -293,10 +246,10 @@ def updateboard():
     LEDbar.setvalue(led)
     print(evaluation)
 
-
     # check best move (skip if players turn)
 
     # send to hardware
+    # print(best)
 
 def singleplayer():
     pass
@@ -317,26 +270,24 @@ def main():  # this should loop
 
     """
 
-    # switch for LED is hardware only (no software)
 
-    gpio.add_event_detect(37, gpio.RISING, callback=singleplayer) # single/multi switch
-    gpio.add_event_detect(37, gpio.FALLING, callback=multiplayer)
-
-    gpio.add_event_detect(37, gpio.RISING) # Button 1
-    gpio.event_detected(37) # True or False
-    gpio.add_event_detect(37, gpio.RISING) # Button 2
-    if gpio.event_detected(37): # True or False
-        print(RFID.read_no_block())
-
-    gpio.add_event_detect(37, gpio.RISING, callback=boardoff)
 
     # Tracks board/reed switch movements
 
     # once player turn is determined
-    updateboard()
 
 
-def startup():
+    # figure out what board/move makes sense from hardware
+
+    example = ["e8", "f8"] # castling uses king movement only
+
+    if stockfish.is_move_correct(
+        "".join(example)
+    ):
+        updateboard(example)
+
+
+def newgame():
     """
     Unknown
 
@@ -371,10 +322,34 @@ def startup():
     main()
 
 
+def startup():
+    """
+    Unknown
+
+    args:
+    returns:
+
+    """
+
+    # switch for LED is hardware only (no software)
+    #gpio.add_event_detect(37, gpio.RISING, callback=singleplayer) # single/multi switch
+    #gpio.add_event_detect(37, gpio.FALLING, callback=multiplayer)
+
+    #gpio.add_event_detect(37, gpio.RISING) # Button 1
+    #gpio.event_detected(37) # True or False
+    #gpio.add_event_detect(37, gpio.RISING) # Button 2
+    #if gpio.event_detected(37): # True or False
+     #   print(RFID.read_no_block())
+
+    #gpio.add_event_detect(37, gpio.RISING, callback=boardoff)
+
+    newgame()
+
+
 alphabet = list(string.ascii_lowercase)
 LEDbar = hardwarescripts.the74HC595()
 RFID = SimpleMFRC522()
-stockfish = Stockfish("/home/pi/full-stack-chessboard/stockfish", depth=8)
+stockfish = Stockfish("/home/pi/full-stack-chessboard/stockfish")
 
 date = datetime.datetime.now().strftime("%Y.%m.%d")
 if "PGNs" not in os.listdir(".."):

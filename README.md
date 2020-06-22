@@ -9,9 +9,9 @@
 
 Next Tasks:
 
-- Flow of user experience
+- Stockfish difficulties (Stockfish levels + stockfish time)!!!
 
-- Stockfish difficulties (Stockfish levels + stockfish time)
+- Flow of user experience
 
 - Checkmates, game end, game restart, etc
 
