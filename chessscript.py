@@ -211,9 +211,11 @@ def updateboard(algebraic):
 
     """
 
+    print(stockfish.get_fen_position())
     fen = updatefen(algebraic)
     updatepgn(algebraic)
     stockfish.set_fen_position(fen)
+    print(stockfish.get_fen_position())
 
     evaluation = stockfish.get_evaluation()
     if evaluation["type"] == "mate":
@@ -246,10 +248,15 @@ def updateboard(algebraic):
     LEDbar.setvalue(led)
     print(evaluation)
 
-    # check best move (skip if players turn)
+    difficulty = 0
+    if "w" not in fen: # check best move (skip if players turn)
+        move = stockfish.get_best_move_time(33 * 1.5 ** (difficulty+1))
+        move = [move[:2], move[2:]]
 
+        print(move)
+
+    print()
     # send to hardware
-    # print(best)
 
 def singleplayer():
     pass
@@ -270,24 +277,29 @@ def main():  # this should loop
 
     """
 
+    while True:
 
 
-    # Tracks board/reed switch movements
 
-    # once player turn is determined
+        # Tracks board/reed switch movements
+
+        # once player turn is determined
 
 
-    # figure out what board/move makes sense from hardware
+        # figure out what board/move makes sense from hardware
 
-    example = ["e8", "f8"] # castling uses king movement only
+        print("give move in 'e2e4'")
+        move = input() # castling uses king movement only
+        move = [move[:2], move[2:]]
 
-    if stockfish.is_move_correct(
-        "".join(example)
-    ):
-        updateboard(example)
+        if stockfish.is_move_correct(
+            "".join(move)
+        ):
+            updateboard(move)
 
 
 def newgame():
+    global round
     """
     Unknown
 
@@ -302,6 +314,9 @@ def newgame():
     # set single or double
 
     # choose difficulty
+    round = 1
+    for n in os.listdir("../PGNs/" + date):
+        round += 1
 
     saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "w")
     saved.write('[Event "Unknown"]\n[Site "Unknown"]\n[Date "')
@@ -316,8 +331,9 @@ def newgame():
     saved.close()
 
     stockfish.set_fen_position(
-        "r2qk2r/pppppbpp/8/3B4/3PP3/2P1QP2/PP4PP/4K2R b kq - 0 1"
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     )
+    print(stockfish.get_best_move())
 
     main()
 
@@ -351,13 +367,11 @@ LEDbar = hardwarescripts.the74HC595()
 RFID = SimpleMFRC522()
 stockfish = Stockfish("/home/pi/full-stack-chessboard/stockfish")
 
+
 date = datetime.datetime.now().strftime("%Y.%m.%d")
 if "PGNs" not in os.listdir(".."):
     os.makedirs("../PGNs")
 if date not in os.listdir("../PGNs"):
     os.makedirs("../PGNs/" + date)
-round = 1
-for n in os.listdir("../PGNs/" + date):
-    round += 1
 
 startup()

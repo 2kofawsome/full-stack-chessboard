@@ -9,11 +9,11 @@
 
 Next Tasks:
 
-- Stockfish difficulties (Stockfish levels + stockfish time)!!!
+- Checkmates, game end, game restart, etc
+
+- Starting game/new game
 
 - Flow of user experience
-
-- Checkmates, game end, game restart, etc
 
 - Wait for more packages to arrive in the mail!
 
