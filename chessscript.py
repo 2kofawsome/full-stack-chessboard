@@ -1,6 +1,6 @@
 from stockfish import Stockfish
 import string, time, os, datetime
-import RPi.GPIO as gpio
+import RPi.GPIO as GPIO
 from mfrc522 import SimpleMFRC522
 import hardwarescripts
 
@@ -248,7 +248,7 @@ def updateboard(algebraic):
     LEDbar.setvalue(led)
     print(evaluation)
 
-    difficulty = 0
+    difficulty = 20
     if "w" not in fen: # check best move (skip if players turn)
         move = stockfish.get_best_move_time(33 * 1.5 ** (difficulty+1))
         move = [move[:2], move[2:]]
@@ -258,15 +258,18 @@ def updateboard(algebraic):
     print()
     # send to hardware
 
-def singleplayer():
-    pass
-    # make it single player
-def multiplayer():
-    pass
-    # make it multi player
+
+def players(pin):
+    if GPIO.input(pin) == 1:
+        print("make single")
+    if GPIO.input(pin) == 0:
+        print("make multi")
+
+
 def boardoff():
     pass
     # shut down procedure + edit game to say terminated part way through
+
 
 def main():  # this should loop
     """
@@ -348,30 +351,31 @@ def startup():
     """
 
     # switch for LED is hardware only (no software)
-    #gpio.add_event_detect(37, gpio.RISING, callback=singleplayer) # single/multi switch
-    #gpio.add_event_detect(37, gpio.FALLING, callback=multiplayer)
-
-    #gpio.add_event_detect(37, gpio.RISING) # Button 1
-    #gpio.event_detected(37) # True or False
-    #gpio.add_event_detect(37, gpio.RISING) # Button 2
-    #if gpio.event_detected(37): # True or False
+    GPIO.setup(29, GPIO.IN)
+    GPIO.add_event_detect(29, GPIO.BOTH, callback=players) # single/multi switch
+    GPIO.setup(31, GPIO.IN)
+    GPIO.add_event_detect(31, GPIO.RISING) # Button 1
+    #GPIO.event_detected(31) # True or False
+    GPIO.setup(33, GPIO.IN)
+    GPIO.add_event_detect(33, GPIO.RISING) # Button 2
+    #if GPIO.event_detected(33): # True or False
      #   print(RFID.read_no_block())
-
-    #gpio.add_event_detect(37, gpio.RISING, callback=boardoff)
+    #detect 5 and 6 not being connected due to switch
 
     newgame()
 
-
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BOARD)
 alphabet = list(string.ascii_lowercase)
 LEDbar = hardwarescripts.the74HC595()
 RFID = SimpleMFRC522()
 stockfish = Stockfish("/home/pi/full-stack-chessboard/stockfish")
-
 
 date = datetime.datetime.now().strftime("%Y.%m.%d")
 if "PGNs" not in os.listdir(".."):
     os.makedirs("../PGNs")
 if date not in os.listdir("../PGNs"):
     os.makedirs("../PGNs/" + date)
+
 
 startup()
