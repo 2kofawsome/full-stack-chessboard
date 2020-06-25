@@ -9,7 +9,7 @@
 
 Next Tasks:
 
-- LCD Display
+- Clean up LCD Displays
 
 - Flow of user experience
 

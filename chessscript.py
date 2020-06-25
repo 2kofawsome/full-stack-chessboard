@@ -3,6 +3,7 @@ import string, time, os, datetime
 import RPi.GPIO as GPIO
 from mfrc522 import SimpleMFRC522
 import hardwarescripts
+import lcddriver
 
 
 def togrid(
@@ -425,19 +426,21 @@ def updateboard(algebraic):
 
     difficulty = 0
 
-    if player == "w":  # check best move (skip if players turn)
-        if GPIO.input(29) == 1 and "w" not in fen:
+    if GPIO.input(29) == 1:
+        if player == "w" and "w" not in fen:  # check best move (skip if players turn)
             move = stockfish.get_best_move_time(33 * 1.5 ** (difficulty + 1))
             move = [move[:2], move[2:]]
-            print(tofide(move))
-    else:
-        if GPIO.input(29) == 1 and "w" in fen:
+            LCD.lcd_display_string(tofide(move) + "               ", 1)
+            LCD.lcd_display_string(
+                "(" + move[0] + "->" + move[1] + ")              ", 2
+            )
+        elif player == "b" and "w" in fen:
             move = stockfish.get_best_move_time(33 * 1.5 ** (difficulty + 1))
             move = [move[:2], move[2:]]
-            print(tofide(move))
-
-    print()
-    # send to hardware
+            LCD.lcd_display_string(tofide(move) + "               ", 1)
+            LCD.lcd_display_string(
+                "(" + move[0] + "->" + move[1] + ")               ", 2
+            )
 
 
 def players(pin):
@@ -446,6 +449,7 @@ def players(pin):
 
 
 def boardoff():
+    LCD.lcd_clear()
     pass
     # shut down procedure + edit game to say terminated part way through
 
@@ -461,7 +465,7 @@ def gameover(result):
     """
 
     if result == True:
-        print("Stalemate")
+        LCD.lcd_display_string("Stalemate       ", 1)
         saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "a")
         saved.write("1/2-1/2")
         saved.close()
@@ -473,7 +477,7 @@ def gameover(result):
         fen = stockfish.get_fen_position()
         fen = fen.split(" ")
         if fen[1] == "b":
-            print("White won")
+            LCD.lcd_display_string("Mate for White  ", 1)
             saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "a")
             saved.write("1-0")
             saved.close()
@@ -482,7 +486,7 @@ def gameover(result):
             ).readlines()
             data[6] = '[Result "1-0"]'
         else:
-            print("Black won")
+            LCD.lcd_display_string("Mate for Black  ", 1)
             saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "a")
             saved.write("0-1")
             saved.close()
@@ -495,7 +499,7 @@ def gameover(result):
     saved.writelines(data)
     saved.close()
 
-    print("New game?")
+    LCD.lcd_display_string("     New Game ->", 2)
     GPIO.event_detected(31)
     while True:
         if GPIO.event_detected(31):
@@ -520,6 +524,7 @@ def main():  # this should loop
 
         # figure out what board/move makes sense from hardware
 
+        print()
         print("give move in 'e2e4'")
         move = input()  # castling uses king movement only
         move = [move[:2], move[2:]]
@@ -547,8 +552,9 @@ def newgame():
         player = "w"  # for now
 
         # set single or double
-        print("Against Engine or Against Player")
-        print(GPIO.input(29))
+
+        LCD.lcd_display_string("Toggle AI Switch", 1)
+        LCD.lcd_display_string("     Continue ->", 2)
         while True:
             time.sleep(0.1)
             if GPIO.event_detected(31):
@@ -571,8 +577,10 @@ def newgame():
         # choose difficulty
         difficulty = 0
         if white == "AI" or black == "AI":
-            print("Determine Engine level")
-            print("Difficulty: " + str(difficulty + 1))
+            LCD.lcd_display_string(
+                "AI Level: " + str(difficulty + 1) + "              ", 1
+            )
+            LCD.lcd_display_string("     Continue ->", 2)
             while True:
                 GPIO.event_detected(33)
                 time.sleep(0.2)
@@ -581,7 +589,9 @@ def newgame():
                         difficulty += 1
                     else:
                         difficulty = 0
-                    print("Difficulty: " + str(difficulty + 1))
+                    LCD.lcd_display_string(
+                        "AI Level: " + str(difficulty + 1) + "              ", 1
+                    )
                 if GPIO.event_detected(31):
                     if white == "AI":
                         white = "AI Level " + str(difficulty + 1)
@@ -640,6 +650,10 @@ def startup():
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
 alphabet = list(string.ascii_lowercase)
+LCD = lcddriver.lcd()
+LCD.lcd_display_string("Full-Stack-Chess", 1)
+LCD.lcd_display_string("-- By Sam Gunter", 2)
+
 LEDbar = hardwarescripts.the74HC595()
 RFID = SimpleMFRC522()
 stockfish = Stockfish("/home/pi/full-stack-chessboard/stockfish", 1)
