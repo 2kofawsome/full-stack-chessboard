@@ -10,7 +10,7 @@ class the74HC595:
         the74HC595.data = 11  # DS
         the74HC595.parallel = 13  # ST_CP
         the74HC595.serial = 15  # SH_CP
-        the74HC595.first = 16 # 74HC595 is not long enough for all LED bars
+        the74HC595.first = 16  # 74HC595 is not long enough for all LED bars
         the74HC595.last = 18
         self._setupboard()
         self.clear()

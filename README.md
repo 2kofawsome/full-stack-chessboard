@@ -9,11 +9,15 @@
 
 Next Tasks:
 
-- Checkmates, game end, game restart, etc
-
-- Starting game/new game
+- LCD Display
 
 - Flow of user experience
+
+- Promotion of pawns
+
+- Better way to clear eventdetection()
+
+- Fix evaluation error on mates once fork is accepted
 
 - Wait for more packages to arrive in the mail!
 
