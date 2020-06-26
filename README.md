@@ -1,3 +1,4 @@
+
 <p>
     <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.6+-blue.svg" alt="Python version" height="17"></a>
     <a href="https://github.com/psf/black">
@@ -7,19 +8,15 @@
 
 # full-stack-chessboard
 
-Next Tasks:
+### Next Tasks:
 
 - RFID stuff
 
 - Fen to PGN
 
-- # send thinking...
+- History of FENs
 
-- # if move, show ai or dont
-
-- Fix evaluation error on mates once fork is accepted
-
-- ----------------------------------------------------------
+<hr>
 
 - Wait for more packages to arrive in the mail!
 
@@ -33,15 +30,14 @@ Next Tasks:
 
 - Turn off on power down
 
-<br>
-
+## Description
 
 A true full stack developer not only runs the database and the website, but builds every part of their project. 
 
 If you do not turn the chess pieces on the lathe and solder the reed switches yourself, how can you ever claim full stack for just running the Raspberry Pi.
 
 
-This project will include: 
+## This Project Includes: 
 
 > An Electrical Engineering component of wiring it all up
 
@@ -55,19 +51,31 @@ This project will include:
 
 Now that's full stack
 
-<br>
-
+### Modules
 
 <details>
- <summary>[Stockfish Download](https://stockfishchess.org/download/) </summary>
-
+ <summary> 
+ 
+``` Python
+import stockfish
 ```
-Compiled by running ["sudo make -j4 profile-build ARCH=armv7 LDFLAGS="-latomic -lpthread -lgcov"](https://www.raspberrypi.org/forums/viewtopic.php?t=245878) on the source code
+</summary>
+I am a contributor: <a href="https://github.com/zhelyabuzhsky/stockfish"> Github </a>
+</details>
+
+## Creation
+
+<details>
+ <summary><a href="https://stockfishchess.org/download/"> Stockfish Download </a></summary>
+ 
+```
+Compiled by running "sudo make -j4 profile-build ARCH=armv7 LDFLAGS="-latomic -lpthread -lgcov" on the source code
 ```
 </details>
 
 
 <br>
 
-## Credits
+### Credits
+
 - [Sam Gunter](https://github.com/2kofawsome)

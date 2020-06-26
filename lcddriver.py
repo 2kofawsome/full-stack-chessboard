@@ -139,34 +139,41 @@ class lcd:
                 while line1 == self.lines.one and line2 == self.lines.two:
                     self.display_string(line1, 1)
                     self.display_string(line2, 2)
+                    if line1 == "Calculating.    ": #special case
+                        sleep(0.2)
+                        self.display_string("Calculating..", 1)
+                        sleep(0.2)
+                        self.display_string("Calculating...", 1)
+                        sleep(0.2)
 
-                    for n in range(4):
-                        sleep(0.25)
+                    else:
+                        for n in range(4):
+                            sleep(0.25)
+                            if line1 != self.lines.one or line2 != self.lines.two:
+                                break
                         if line1 != self.lines.one or line2 != self.lines.two:
                             break
-                    if line1 != self.lines.one or line2 != self.lines.two:
-                        break
 
-                    if len(line1) > len(line2):
-                        for n in range(len(line1) - 16):
-                            sleep(0.15)
-                            self.display_string(line1[n + 1 :], 1)
-                            if len(line1) - len(line2) < len(line1) - 16 - n:
-                                self.display_string(line2[n + 1 :], 2)
-                    else:
-                        for n in range(len(line2) - 16):
-                            sleep(0.15)
-                            if len(line2) - len(line1) < len(line2) - 16 - n:
+                        if len(line1) > len(line2):
+                            for n in range(len(line1) - 16):
+                                sleep(0.15)
                                 self.display_string(line1[n + 1 :], 1)
-                            self.display_string(line2[n + 1 :], 2)
+                                if len(line1) - len(line2) < len(line1) - 16 - n:
+                                    self.display_string(line2[n + 1 :], 2)
+                        else:
+                            for n in range(len(line2) - 16):
+                                sleep(0.15)
+                                if len(line2) - len(line1) < len(line2) - 16 - n:
+                                    self.display_string(line1[n + 1 :], 1)
+                                self.display_string(line2[n + 1 :], 2)
 
-                    for n in range(4):
-                        sleep(0.25)
-                        if line1 != self.lines.one or line2 != self.lines.two:
-                            break
-                    else:
-                        continue
-                    break
+                        for n in range(4):
+                            sleep(0.25)
+                            if line1 != self.lines.one or line2 != self.lines.two:
+                                break
+                        else:
+                            continue
+                        break
         except KeyboardInterrupt:
             self.clear()
 
