@@ -1,8 +1,8 @@
-from stockfish import Stockfish
-import string, time, os, datetime
+import string, time, os, datetime, sys
 import RPi.GPIO as GPIO
+from stockfish import Stockfish
 from mfrc522 import SimpleMFRC522
-import hardwarescripts
+import driver74HC595
 import lcddriver
 
 
@@ -191,8 +191,8 @@ def tofide(algebraic):
     """
     Updates and saves PGN based on a valid move
 
-    args: algebraic move
-        ["e2", "e4"]
+    args: algebraic move, 3rd if pawn promotion
+        ["e2", "e4"] or ["e2", "e4", "Q"]
     returns: FIDE move
         "e4" or "Nxf3+" or "O-O-O"
     """
@@ -246,6 +246,9 @@ def tofide(algebraic):
 
         fide = fide + algebraic[1]
 
+        if len(algebraic) == 3:
+            fide = fide + "=" + algebraic[2]
+
     return fide
 
 
@@ -253,8 +256,8 @@ def updatefen(algebraic):
     """
     Updates current fen position based on a valid move
 
-    args: algebraic move
-        ["e2", "e4"]
+    args: algebraic move, 3rd if pawn promotion
+        ["e2", "e4"] or ["e2", "e4", "Q"]
     returns: fen
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     """
@@ -304,7 +307,10 @@ def updatefen(algebraic):
         fen[4] = str(int(fen[4]) + 1)
 
     # 1 moves
-    grid[int(algebraic[1][1]) - 1][alphabet.index(algebraic[1][0])] = last
+    if len(algebraic) == 2:
+        grid[int(algebraic[1][1]) - 1][alphabet.index(algebraic[1][0])] = last
+    else: # len of 3 if pawn promotion
+        grid[int(algebraic[1][1]) - 1][alphabet.index(algebraic[1][0])] = algebraic[2]
     grid[int(algebraic[0][1]) - 1][alphabet.index(algebraic[0][0])] = ""
 
     if last == "K":
@@ -342,9 +348,9 @@ def updatepgn(algebraic):
     """
     Updates and saves PGN based on a valid move
 
-    args: algebraic move
-        ["e2", "e4"]
-    returns: None
+    args: algebraic move, 3rd if pawn promotion
+        ["e2", "e4"] or ["e2", "e4", "Q"]
+    returns: None or False if Checkmate
     """
     fen = stockfish.get_fen_position()
     fen = fen.split(" ")
@@ -376,14 +382,13 @@ def updatepgn(algebraic):
 
 def updateboard(algebraic):
     """
-    Unknown
+    Once move is determined, runs funcitons neccesary to update board position
 
-    args: algebraic move
-        ["e2", "e4"]
-    returns: None
+    args: algebraic move, 3rd if pawn promotion
+        ["e2", "e4"] or ["e2", "e4", "Q"]
+    returns: None or False if Checkmate
 
     """
-
     fen = updatepgn(algebraic)
     if fen == False:
         return False
@@ -427,31 +432,60 @@ def updateboard(algebraic):
     difficulty = 0
 
     if GPIO.input(29) == 1:
+        # send thinking...
         if player == "w" and "w" not in fen:  # check best move (skip if players turn)
             move = stockfish.get_best_move_time(33 * 1.5 ** (difficulty + 1))
             move = [move[:2], move[2:]]
-            LCD.lcd_display_string(tofide(move) + "               ", 1)
-            LCD.lcd_display_string(
-                "(" + move[0] + "->" + move[1] + ")              ", 2
-            )
+            LCD.update(tofide(move) + " (" + move[0] + " -> " + move[1] + ")", 1)
+            LCD.update("  Scan Pieces ->", 2)
         elif player == "b" and "w" in fen:
             move = stockfish.get_best_move_time(33 * 1.5 ** (difficulty + 1))
             move = [move[:2], move[2:]]
-            LCD.lcd_display_string(tofide(move) + "               ", 1)
-            LCD.lcd_display_string(
-                "(" + move[0] + "->" + move[1] + ")               ", 2
-            )
+            LCD.update(tofide(move) + " (" + move[0] + " -> " + move[1] + ")", 1)
+            LCD.update("  Scan Pieces ->", 2)
 
 
 def players(pin):
-    pass
-    # edit file to say mixed
+    """
+    Cleans up hardware, edits game saves, turns off system safely
+
+    args: None
+    returns: None
+    """
+    data = open(
+        ("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r"
+    ).readlines()
+    if player == "w":
+        data[5] = '[Black "Mixed"]\n'
+    elif player == "b"
+        data[4] = '[White "Mixed"]\n'
+
+    # if move, show ai or dont
 
 
 def boardoff():
-    LCD.lcd_clear()
-    pass
-    # shut down procedure + edit game to say terminated part way through
+    """
+    Cleans up hardware, edits game saves, turns off system safely
+
+    args: None
+    returns: None
+    """
+    #LCD.clear() Runs in other process
+    data = open(
+        ("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r"
+    ).readlines()
+    if data[6] == '[Result "*"]\n':
+        data.insert(7, '[Termination "abandoned"]')
+        saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "w")
+        saved.writelines(data)
+        saved.close()
+    if data[-1] == '\n':
+        os.remove("../PGNs/" + date + "/Game" + str(round) + ".txt")
+
+    LEDbar.clear()
+    GPIO.cleanup()
+
+    # will also shutdown raspberry pi
 
 
 def gameover(result):
@@ -461,11 +495,9 @@ def gameover(result):
     args: result
         True or False
     returns: None
-
     """
-
     if result == True:
-        LCD.lcd_display_string("Stalemate       ", 1)
+        LCD.update("Stalemate", 1)
         saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "a")
         saved.write("1/2-1/2")
         saved.close()
@@ -477,7 +509,7 @@ def gameover(result):
         fen = stockfish.get_fen_position()
         fen = fen.split(" ")
         if fen[1] == "b":
-            LCD.lcd_display_string("Mate for White  ", 1)
+            LCD.update("Checkmate for White", 1)
             saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "a")
             saved.write("1-0")
             saved.close()
@@ -486,7 +518,7 @@ def gameover(result):
             ).readlines()
             data[6] = '[Result "1-0"]'
         else:
-            LCD.lcd_display_string("Mate for Black  ", 1)
+            LCD.update("Checkmate for Black", 1)
             saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "a")
             saved.write("0-1")
             saved.close()
@@ -499,8 +531,8 @@ def gameover(result):
     saved.writelines(data)
     saved.close()
 
-    LCD.lcd_display_string("     New Game ->", 2)
-    GPIO.event_detected(31)
+    GPIO.event_detected(31)  # clear detection
+    LCD.update("     New Game ->", 2)
     while True:
         if GPIO.event_detected(31):
             break
@@ -509,14 +541,20 @@ def gameover(result):
 
 def main():  # this should loop
     """
-    Unknown
+    Listens for pieces movements, makes sure they are okay, then triggers update
 
-    args:
-    returns:
+    args: None
+    returns: None
 
     """
-
     while True:
+        fen = stockfish.get_fen_position()
+        fen = fen.split(" ")
+        if fen[1] == "w" and player == fen[1]:
+            LCD.update("White's move", 1)
+        elif fen[1] == "b" and player == fen[1]:
+            LCD.update("Black's move", 1)
+        LCD.update("  Scan Pieces ->", 2)
 
         # Tracks board/reed switch movements
 
@@ -529,32 +567,54 @@ def main():  # this should loop
         move = input()  # castling uses king movement only
         move = [move[:2], move[2:]]
 
-        if stockfish.is_move_correct("".join(move)):
-            status = updateboard(move)
-            if status != None:  # True is stalemate, False is checkmate
-                break
+        grid = togrid(fen[0])
+
+        last = grid[int(move[0][1]) - 1][alphabet.index(move[0][0])]
+        print()
+        if (last == "P" and move[1][1] == "8") or (last == "p" and move[1][1] == "1"):
+            LCD.update("Scan Promoted Piece", 1)
+            LCD.update("", 2)
+            while True:
+                piece = RFID.read()[1][0]
+                if not (piece.upper() == "Q" or piece.upper() == "R" or \
+                        piece.upper() == "B" or piece.upper() == "N"):
+                    LCD.update("Must be a Queen, Knight, Rook, or Bishop", 2)
+                elif piece.isupper() and last.islower():
+                    LCD.update("Must be a Black", 2)
+                elif piece.islower() and last.isupper():
+                    LCD.update("Must be a White", 2)
+                else:
+                    break
+            move.append(piece)
+
+        if not stockfish.is_move_correct("".join(move)):
+            LCD.update("Move Not Correct", 2)
+            time.sleep(1)
+            continue
+
+        status = updateboard(move)
+        if status != None:  # True is stalemate, False is checkmate
+            break
     gameover(status)
 
 
 def newgame():
     global round, difficulty, player
     """
-    Determines values required to start the game
+    Determines values required to start a new game
 
     args: None
     returns: None
-
     """
     while True:
-
         # output "scan your king"
         # RFID.read()
         player = "w"  # for now
 
         # set single or double
-
-        LCD.lcd_display_string("Toggle AI Switch", 1)
-        LCD.lcd_display_string("     Continue ->", 2)
+        GPIO.event_detected(31) # clear detection
+        LCD.update("Toggle Engine Switch", 1)
+        LCD.update("     Continue ->", 2)
         while True:
             time.sleep(0.1)
             if GPIO.event_detected(31):
@@ -571,28 +631,24 @@ def newgame():
                 break
 
         time.sleep(0.2)
-        GPIO.event_detected(31)  # need better way to clear these
+        GPIO.event_detected(31) # clear detection
         GPIO.event_detected(33)
-
         # choose difficulty
         difficulty = 0
         if white == "AI" or black == "AI":
-            LCD.lcd_display_string(
-                "AI Level: " + str(difficulty + 1) + "              ", 1
-            )
-            LCD.lcd_display_string("     Continue ->", 2)
+            LCD.update("Engine Level: " + str(difficulty + 1), 1)
+            LCD.update("     Continue ->", 2)
             while True:
-                GPIO.event_detected(33)
-                time.sleep(0.2)
+                time.sleep(0.1)
+                GPIO.event_detected(33) # clear detection
                 if GPIO.event_detected(33):
                     if difficulty != 9:
                         difficulty += 1
                     else:
                         difficulty = 0
-                    LCD.lcd_display_string(
-                        "AI Level: " + str(difficulty + 1) + "              ", 1
-                    )
+                    LCD.update("Engine Level: " + str(difficulty + 1), 1)
                 if GPIO.event_detected(31):
+                    stockfish.set_skill_level(difficulty*2)
                     if white == "AI":
                         white = "AI Level " + str(difficulty + 1)
                     else:
@@ -614,10 +670,11 @@ def newgame():
         saved.write(black)  # Determined by above
         saved.write('"]\n[Result "*"]\n\n')
         saved.close()
-
         stockfish.set_fen_position(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         )
+        #stockfish.set_fen_position("k7/7P/8/8/8/8/8/KQ6 w - - 0 1")
+
 
         LEDbar.setvalue([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
 
@@ -630,9 +687,7 @@ def startup():
 
     args: None
     returns: None
-
     """
-
     # switch for LED is hardware only (no software)
     GPIO.setup(29, GPIO.IN)
     GPIO.add_event_detect(29, GPIO.BOTH, callback=players)  # single/multi switch
@@ -651,10 +706,7 @@ GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
 alphabet = list(string.ascii_lowercase)
 LCD = lcddriver.lcd()
-LCD.lcd_display_string("Full-Stack-Chess", 1)
-LCD.lcd_display_string("-- By Sam Gunter", 2)
-
-LEDbar = hardwarescripts.the74HC595()
+LEDbar = driver74HC595.the74HC595()
 RFID = SimpleMFRC522()
 stockfish = Stockfish("/home/pi/full-stack-chessboard/stockfish", 1)
 
@@ -664,4 +716,8 @@ if "PGNs" not in os.listdir(".."):
 if date not in os.listdir("../PGNs"):
     os.makedirs("../PGNs/" + date)
 
-startup()
+try:
+    time.sleep(1)
+    startup()
+except KeyboardInterrupt:
+    boardoff()

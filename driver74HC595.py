@@ -35,7 +35,7 @@ class the74HC595:
         gpio.output(the74HC595.serial, gpio.HIGH)
         gpio.output(the74HC595.serial, gpio.LOW)
 
-    def clear(self):  # SH_CP
+    def clear(self):
         """
         Sets the 74HC595 back to all off
         Sets both specified GPIOs off

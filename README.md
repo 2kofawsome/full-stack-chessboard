@@ -9,17 +9,29 @@
 
 Next Tasks:
 
-- Clean up LCD Displays
+- RFID stuff
 
-- Flow of user experience
+- Fen to PGN
 
-- Promotion of pawns
+- # send thinking...
 
-- Better way to clear eventdetection()
+- # if move, show ai or dont
 
 - Fix evaluation error on mates once fork is accepted
 
+- ----------------------------------------------------------
+
 - Wait for more packages to arrive in the mail!
+
+- Choose side you play as
+ 
+- Reed Switch layout
+
+- Pieces to middle to resign/draw
+
+- Turn on on startup
+
+- Turn off on power down
 
 <br>
 
