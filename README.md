@@ -12,9 +12,11 @@
 
 - RFID stuff
 
-- Fen to PGN
+	- Fen to PGN
 
-- History of FENs
+	- History of FENs
+
+- LED changes direction depending on who is up next
 
 <hr>
 
@@ -30,13 +32,14 @@
 
 - Turn off on power down
 
+<br>
 ## Description
 
 A true full stack developer not only runs the database and the website, but builds every part of their project. 
 
 If you do not turn the chess pieces on the lathe and solder the reed switches yourself, how can you ever claim full stack for just running the Raspberry Pi.
 
-
+<br>
 ## This Project Includes: 
 
 > An Electrical Engineering component of wiring it all up
@@ -51,19 +54,72 @@ If you do not turn the chess pieces on the lathe and solder the reed switches yo
 
 Now that's full stack
 
-### Modules
+<br>
+### Components
 
-<details>
- <summary> 
- 
+- [Raspberry Pi Zero W](https://www.canakit.com/raspberry-pi-zero-wireless.html)
+	- 16 GB MicroSD Card
+	- 2.5A Power Supply
+- [2x20-pin Male Header](https://www.amazon.ca/gp/product/B0756KM7CY/ref=ppx_yo_dt_b_asin_title_o01_s00?ie=UTF8&psc=1)
+- [Freenove RFID Starter Kit](https://www.amazon.ca/gp/product/B06VTH7L28/ref=ppx_yo_dt_b_asin_title_o04_s00?ie=UTF8&psc=1)
+	- 74HC595
+	- LED Bar
+	- LCD1602 Display
+	- RC522 RFID module
+- [Mastercraft 25W Soldering Iron](https://www.canadiantire.ca/en/pdp/mastercraft-25w-soldering-iron-0586305p.html)
+- [PCB Prototype Board](https://www.aliexpress.com/item/32588853051.html)
+- [Resisitors](https://www.aliexpress.com/item/32785425406.html)
+- [13.56MHZ RFID Tags](https://www.aliexpress.com/item/32898752493.html)
+- [Soldering Cable](https://www.aliexpress.com/item/32822880152.html)
+- [Switches](https://www.aliexpress.com/item/32990004998.html)
+- [Buttons](https://www.aliexpress.com/item/2024643496.html)
+- [MCP23017](https://www.aliexpress.com/item/32909314135.html)
+- [TCA9548A](https://www.aliexpress.com/item/32648420655.html)
+- Neodymium Magnets
+- [Reed Switches](https://www.aliexpress.com/item/32801522211.html)
+
+
+<br>
+### Circuitry
+
+Will go here
+
+<br>
+### Piece and Board creation
+
+Will go here
+
+<br>
+### Software
+
 ``` Python
-import stockfish
+import string, time, os, datetime, sys
+import RPi.GPIO as GPIO
 ```
-</summary>
-I am a contributor: <a href="https://github.com/zhelyabuzhsky/stockfish"> Github </a>
-</details>
 
-## Creation
+Contributed: [Github](https://github.com/zhelyabuzhsky/stockfish)
+``` Python
+from stockfish import Stockfish
+```
+
+I built this
+``` Python
+import driver74HC595
+```
+
+Editied from: [Github](https://github.com/the-raspberry-pi-guy/lcd)
+With accompanying [Video](https://www.youtube.com/watch?v=3XLjVChVgec)
+``` Python
+import lcddriver
+```
+
+Thank you to: [Github](https://github.com/pimylifeup/MFRC522-python)
+``` Python
+from mfrc522 import SimpleMFRC522
+```
+
+<br>
+## Engine
 
 <details>
  <summary><a href="https://stockfishchess.org/download/"> Stockfish Download </a></summary>
@@ -73,9 +129,7 @@ Compiled by running "sudo make -j4 profile-build ARCH=armv7 LDFLAGS="-latomic -l
 ```
 </details>
 
-
 <br>
-
 ### Credits
 
 - [Sam Gunter](https://github.com/2kofawsome)

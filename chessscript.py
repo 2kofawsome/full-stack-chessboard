@@ -226,7 +226,7 @@ def tofen(grid):
     """
     Takes grid and returns a FEN (without extra information at end)
 
-    args: grid[0]
+    args: grid
         [['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'], ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'], ['', '', '', '', '', '', '', ''], ['', '', '', '', '', '', '', ''], ['', '', '', '', 'P', '', '', ''], ['', '', '', '', '', '', '', ''], ['P', 'P', 'P', 'P', '', 'P', 'P', 'P'], ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']]
     returns: fen[0]
         "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR"
@@ -307,7 +307,7 @@ def updatefen(algebraic):
     # 1 moves
     if len(algebraic) == 2:
         grid[int(algebraic[1][1]) - 1][alphabet.index(algebraic[1][0])] = last
-    else: # len of 3 if pawn promotion
+    else:  # len of 3 if pawn promotion
         grid[int(algebraic[1][1]) - 1][alphabet.index(algebraic[1][0])] = algebraic[2]
     grid[int(algebraic[0][1]) - 1][alphabet.index(algebraic[0][0])] = ""
 
@@ -427,6 +427,62 @@ def updateboard(algebraic):
         return True
 
 
+def rebuildpgn(fen):
+    """
+    Rebuilds PGN based on FEN from rebuildfen
+
+    args: fen
+        "rn1qkbnr/pppbpp1p/6p1/3pP2Q/8/8/PPPP1PPP/RNB1KBNR w KQkq - 0 4"
+    returns: None
+    """
+
+    # Series of fens at the bottom of pgn that will be chacked to see if ever lined up
+    # if so, comment out all moves after that point
+    # if not, custom starting position and new moves from 1.
+    # need way to go over even commented out code if further RFID adjustments
+    # need way to comment out custom starting position if further RFID adjustments
+
+    print(fen)
+
+    pass
+
+
+def rebuildfen(grid):
+    """
+    Rebuilds FEN based on grid from rebuildpieces
+
+    args: grid
+        [['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'], ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'], ['', '', '', '', '', '', '', ''], ['', '', '', '', '', '', '', ''], ['', '', '', '', 'P', '', '', ''], ['', '', '', '', '', '', '', ''], ['P', 'P', 'P', 'P', '', 'P', 'P', 'P'], ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']]
+    returns: fen
+        "rn1qkbnr/pppbpp1p/6p1/3pP2Q/8/8/PPPP1PPP/RNB1KBNR w KQkq - 0 4"
+    """
+    # Series of fens at the bottom of pgn that will be chacked to see if ever lined up
+    # if not, build fen with fingers crossed for en passent, kings, etc (ask user whos turn)
+
+    print(grid)
+
+    pass
+
+
+def rebuildpieces(grid):
+    """
+    Edits pieces grid according to players RFID scans
+
+    args: grid
+        [['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'], ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'], ['', '', '', '', '', '', '', ''], ['', '', '', '', '', '', '', ''], ['', '', '', '', 'P', '', '', ''], ['', '', '', '', '', '', '', ''], ['P', 'P', 'P', 'P', '', 'P', 'P', 'P'], ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']]
+    returns: None
+    """
+    time.sleep(0.5)
+    # entirely user stuff
+    # scan a piece or cancel
+    # scan resultant pieces
+    # loop both of above if required
+
+    print(grid)
+
+    pass
+
+
 def enginemove(fen):
     """
     Sends move to display if it is engine's turn
@@ -468,24 +524,33 @@ def main():  # this should loop
         fen = stockfish.get_fen_position()
         fen = fen.split(" ")
         enginemove(fen)
-        if fen[1] == "w" and player == fen[1]:
+        if fen[1] == "w" and "Engine" not in white:
             LCD.update("White's move", 1)
-        elif fen[1] == "b" and player == fen[1]:
+        elif fen[1] == "b" and "Engine" not in black:
             LCD.update("Black's move", 1)
         LCD.update("  Scan Pieces ->", 2)
+        grid = togrid(fen[0])
 
-        # Tracks board/reed switch movements
-
-        # once player turn is determined
-
-        # figure out what board/move makes sense from hardware
+        changed = False
+        GPIO.event_detected(31)  # clear detection
+        GPIO.event_detected(33)
+        while True:
+            # Tracks board/reed switch movements
+            # once player turn is determined
+            # figure out what board/move makes sense from hardware
+            if GPIO.event_detected(33):
+                break
+            elif GPIO.event_detected(31):
+                changed = True
+                rebuildpieces(grid)
+                break
+        if changed == True:
+            continue
 
         print("give move in 'e2e4'")
         move = input()  # castling uses king movement only
         print()
         move = [move[:2], move[2:]]
-
-        grid = togrid(fen[0])
 
         last = grid[int(move[0][1]) - 1][alphabet.index(move[0][0])]
         if (last == "P" and move[1][1] == "8") or (last == "p" and move[1][1] == "1"):
@@ -493,8 +558,12 @@ def main():  # this should loop
             LCD.update("", 2)
             while True:
                 piece = RFID.read()[1][0]
-                if not (piece.upper() == "Q" or piece.upper() == "R" or \
-                        piece.upper() == "B" or piece.upper() == "N"):
+                if not (
+                    piece.upper() == "Q"
+                    or piece.upper() == "R"
+                    or piece.upper() == "B"
+                    or piece.upper() == "N"
+                ):
                     LCD.update("Must be a Queen, Knight, Rook, or Bishop", 2)
                 elif piece.isupper() and last.islower():
                     LCD.update("Must be a Black", 2)
@@ -540,14 +609,16 @@ def players(pin):
             black = "Player"
         return
 
-    #if data[-1] == '\n':
+    # if data[-1] == '\n':
     #    os.remove("../PGNs/" + date + "/Game" + str(round) + ".txt")
 
     if GPIO.input(29) == 0:
         if player == "w" and "Engine" in data[5]:
             data[5] = '[Black "' + black + ' -> Player"]\n'
+            black = "Player"
         elif player == "b" and "Engine" in data[4]:
             data[4] = '[White "' + white + ' -> Player"]\n'
+            white = "Player"
     saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "w")
     saved.writelines(data)
     saved.close()
@@ -623,10 +694,10 @@ def newgame():
 
         # output "scan your king"
         # RFID.read()
-        player = "b"  # for now
+        player = "w"  # for now
 
         # sets Engine/Player
-        GPIO.event_detected(31) # clear detection
+        GPIO.event_detected(31)  # clear detection
         LCD.update("Toggle Engine Switch", 1)
         LCD.update("     Continue ->", 2)
         while True:
@@ -648,7 +719,7 @@ def newgame():
         difficulty = 0
         if white == "Engine" or black == "Engine":
             time.sleep(0.2)
-            GPIO.event_detected(31) # clear detection
+            GPIO.event_detected(31)  # clear detection
             GPIO.event_detected(33)
             LCD.update("Engine Level: " + str(difficulty + 1), 1)
             LCD.update("     Continue ->", 2)
@@ -663,7 +734,7 @@ def newgame():
                     time.sleep(0.1)
                     GPIO.event_detected(33)  # clear detection
                 if GPIO.event_detected(31):
-                    stockfish.set_skill_level(difficulty*2)
+                    stockfish.set_skill_level(difficulty * 2)
                     if white == "Engine":
                         white = "Engine Level " + str(difficulty + 1)
                     else:
@@ -684,8 +755,7 @@ def newgame():
         stockfish.set_fen_position(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         )
-        #stockfish.set_fen_position("k7/7P/1K6/8/8/8/8/8 w - - 0 1")
-
+        # stockfish.set_fen_position("k7/7P/1K6/8/8/8/8/8 w - - 0 1")
 
         LEDbar.setvalue([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
 
@@ -699,16 +769,14 @@ def boardoff():
     args: None
     returns: None
     """
-    #LCD.clear() Runs in other process
-    data = open(
-        ("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r"
-    ).readlines()
+    # LCD.clear() Runs in other process
+    data = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r").readlines()
     if data[6] == '[Result "*"]\n':
         data.insert(7, '[Termination "abandoned"]\n')
         saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "w")
         saved.writelines(data)
         saved.close()
-    if data[-1] == '\n':
+    if data[-1] == "\n":
         os.remove("../PGNs/" + date + "/Game" + str(round) + ".txt")
 
     LEDbar.clear()
@@ -736,6 +804,7 @@ def startup():
     # detect 5 and 6 not being connected due to switch
 
     newgame()
+
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BOARD)
