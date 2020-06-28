@@ -1,4 +1,4 @@
-import string, time, os, datetime, sys
+import string, time, os, datetime, sys, re
 import RPi.GPIO as GPIO
 from stockfish import Stockfish
 from mfrc522 import SimpleMFRC522
@@ -386,9 +386,11 @@ def updateboard(algebraic):
         ["e2", "e4"] or ["e2", "e4", "Q"]
     returns: None or False if Checkmate
     """
+    global gamefens
     fen = updatepgn(algebraic)
     if fen == False:
         return False
+    gamefens["1"].append(fen)
 
     try:
         evaluation = stockfish.get_evaluation()
@@ -418,10 +420,14 @@ def updateboard(algebraic):
                 led = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1]
             elif evaluation["value"] <= -1000:
                 led = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1]
-    except IndexError:
+    except IndexError as E:
+        print(E)
         led = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     LEDbar.setvalue(led)
+
+    print(moves)
+    print()
 
     if stockfish.get_best_move() == None:  # stalemate
         return True
@@ -435,7 +441,101 @@ def rebuildpgn(fen):
         "rn1qkbnr/pppbpp1p/6p1/3pP2Q/8/8/PPPP1PPP/RNB1KBNR w KQkq - 0 4"
     returns: None
     """
+    global gamefens
 
+    fen = fen.split(" ")
+
+    branch, node = None, None
+    for n in reversed(sorted(gamefens.keys())):
+        for m in range(len(gamefens[n])):
+            node = m # will always be either node or max length if no branch exists
+            if gamefens[n][m][0] == fen[0]:
+                branch = n
+                break
+        else:
+            continue
+        break
+
+    data = open(
+        ("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r"
+    ).readlines()
+
+    if branch == None:
+        # What happens if have to create a FEN
+        for n in range(len(data)): # What happens when previous FEN exists
+            if data[n] == '[SetUp "1"]\n':
+                lastfen = data[n+1] #save fen first
+                del data[n]
+                del data[n]
+
+        # remove old {}
+        old = data[-1]
+        old = old.split("{")
+        for n in range(len(old)):
+            for m in range(len(n)):
+                if m == "{":
+                    old[n] = old[n][:m]
+        old = "".join(old)
+
+        data[-1] = "{" + lastfen[:-1] + " " + old + '}\n'
+
+        data.append('[SetUp "1"]\n')
+        data.append('[FEN "' + " ".join(fen) + '"]\n')
+
+        if fen[1] == "b":
+            data.append(str(node % 2 + 1) + "...")
+        else:
+            data.append("")
+
+        # resets game fens
+        gamefens = {}
+        gamefen = []
+        for n in node:
+            gamefen.append("")
+        gamefens["0"] = gamefen[:]
+
+    else:
+        # What happens if existed in a past state
+        print(branch) #0 indexed (start position)
+        print(node) #0 indexed
+
+
+
+        if branch != 0: #if not in master branch
+            # move to master branch, putting everything after that point in master branch to a {}
+                # delete any {} existing inside new {} of old master
+            # take everything after that point in side branch and keep in {}
+            pass
+
+        old = data[-1]
+        olds = re.findall("\{[^{}]+\}", old)
+
+        branches = []
+        for n in gamefens.keys():
+            branches.append(n)
+        branches.sort()
+
+        for n in range(len(branches)):
+            if int(branches[n]) > branch:
+                del gamefens[branches[n]]
+                old.replace(olds[n], "")
+
+        # add all moves afetr this node to {}
+
+
+        data[-1] = old
+
+
+
+
+
+
+    data = open(
+        ("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r"
+    ).readlines()
+    saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "w")
+    saved.writelines(data)
+    saved.close()
     # Series of fens at the bottom of pgn that will be chacked to see if ever lined up
     # if so, comment out all moves after that point
     # if not, custom starting position and new moves from 1.
@@ -678,7 +778,7 @@ def gameover(result):
 
 
 def newgame():
-    global round, difficulty, player, white, black
+    global round, difficulty, player, white, black, gamefens
     """
     Determines values required to start a new game
 
@@ -755,6 +855,8 @@ def newgame():
         stockfish.set_fen_position(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         )
+
+        gamefens = {"0":[]}
         # stockfish.set_fen_position("k7/7P/1K6/8/8/8/8/8 w - - 0 1")
 
         LEDbar.setvalue([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])

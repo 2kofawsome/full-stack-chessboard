@@ -16,7 +16,9 @@
 
 	- History of FENs
 
-- LED changes direction depending on who is up next
+- LED changes direction depending on who starts
+
+- Draw on repetition/50 move?
 
 <hr>
 
@@ -33,6 +35,7 @@
 - Turn off on power down
 
 <br>
+
 ## Description
 
 A true full stack developer not only runs the database and the website, but builds every part of their project. 
@@ -40,6 +43,7 @@ A true full stack developer not only runs the database and the website, but buil
 If you do not turn the chess pieces on the lathe and solder the reed switches yourself, how can you ever claim full stack for just running the Raspberry Pi.
 
 <br>
+
 ## This Project Includes: 
 
 > An Electrical Engineering component of wiring it all up
@@ -55,6 +59,7 @@ If you do not turn the chess pieces on the lathe and solder the reed switches yo
 Now that's full stack
 
 <br>
+
 ### Components
 
 - [Raspberry Pi Zero W](https://www.canakit.com/raspberry-pi-zero-wireless.html)
@@ -80,16 +85,19 @@ Now that's full stack
 
 
 <br>
+
 ### Circuitry
 
 Will go here
 
 <br>
+
 ### Piece and Board creation
 
 Will go here
 
 <br>
+
 ### Software
 
 ``` Python
@@ -119,6 +127,7 @@ from mfrc522 import SimpleMFRC522
 ```
 
 <br>
+
 ## Engine
 
 <details>
@@ -130,6 +139,7 @@ Compiled by running "sudo make -j4 profile-build ARCH=armv7 LDFLAGS="-latomic -l
 </details>
 
 <br>
+
 ### Credits
 
 - [Sam Gunter](https://github.com/2kofawsome)
