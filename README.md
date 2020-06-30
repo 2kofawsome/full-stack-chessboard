@@ -12,10 +12,6 @@
 
 - RFID stuff
 
-	- Fen to PGN
-
-	- History of FENs
-
 - LED changes direction depending on who starts
 
 - Draw on repetition/50 move?

@@ -185,7 +185,7 @@ def tofide(algebraic):
             add = add.replace(" ", "")
             fide = fide + add
 
-        if next != "":
+        if next != "" or (fen[3] == algebraic[1] and (last == "p" or last == "P")):
             if last == "p" or last == "P":
                 fide = fide + algebraic[0][0]
             fide = fide + "x"
@@ -342,40 +342,73 @@ def updatefen(algebraic):
     return fen
 
 
-def updatepgn(algebraic):
+def updatepgn(): # REMADE
     """
-    Updates and saves PGN based on a valid move
+    Updates and saves PGN based on gamefens and gamefides
 
-    args: algebraic move, 3rd if pawn promotion
-        ["e2", "e4"] or ["e2", "e4", "Q"]
-    returns: None or False if Checkmate
+    args: None
+    returns: None
     """
-    fen = stockfish.get_fen_position()
-    fen = fen.split(" ")
 
-    saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "a")
+    data = open(
+        ("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r"
+    ).readlines()
 
-    move = ""
-    if fen[1] == "w":
-        saved.write(fen[5] + ". ")
+    start = int(data[-1].split(".")[0]) # start index
+    if data[-1][1:4] == "..." or data[-1][2:5] == "..." or data[-1][3:6] == "...":
+        move = "b"
+        data[-1] = str(start) + "..."
+    else:
+        move = "w"
+        data[-1] = ""
 
-    saved.write(tofide(algebraic))
+    print(gamefides)
 
-    fen = updatefen(algebraic)
-    stockfish.set_fen_position(fen)
+    for n in range(1, len(gamefides)):
+        if isinstance(gamefides[n], list):
+            if move == "w":
+                tempstart = start - 1
+                tempmove = "b"
+            else:
+                tempmove = "w"
+                tempstart = start
+            data[-1] = data[-1] + "("
+            if tempmove == "b":
+                data[-1] = data[-1] + str(tempstart) + "... "
+            for m in range(len(gamefides[n])):
+                if tempmove == "w":
+                    data[-1] = data[-1] + str(tempstart) + ". "
 
-    if ischeck():
-        if stockfish.get_best_move() == None:
-            saved.write("#")
-            saved.write(" ")
-            saved.close()
-            return False
+                if m == len(gamefides[n])-1:
+                    data[-1] = data[-1] + gamefides[n][m] + ") "
+                    break
+                else:
+                    data[-1] = data[-1] + gamefides[n][m] + " "
+
+                if tempmove == "w":
+                    tempmove = "b"
+                else:
+                    tempstart += 1
+                    tempmove = "w"
+
+            if move == "b" and n != len(gamefides)-1: # for next portion unless last value
+                data[-1] = data[-1] + str(tempstart) + "... "
+
         else:
-            saved.write("+")
-    saved.write(" ")
-    saved.close()
+            if move == "w":
+                data[-1] = data[-1] + str(start) + ". "
 
-    return fen
+            data[-1] = data[-1] + gamefides[n] + " "
+
+            if move == "w":
+                move = "b"
+            else:
+                start += 1
+                move = "w"
+
+    saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "w")
+    saved.writelines(data)
+    saved.close()
 
 
 def updateboard(algebraic):
@@ -386,11 +419,32 @@ def updateboard(algebraic):
         ["e2", "e4"] or ["e2", "e4", "Q"]
     returns: None or False if Checkmate
     """
-    global gamefens
-    fen = updatepgn(algebraic)
-    if fen == False:
-        return False
-    gamefens["1"].append(fen)
+    global gamefens, gamefides, storedfens, storedfides
+    fen = stockfish.get_fen_position()
+    fen = fen.split(" ")
+
+    fide = tofide(algebraic)
+
+    fen = updatefen(algebraic)
+    stockfish.set_fen_position(fen)
+
+    if ischeck():
+        if stockfish.get_best_move() == None:
+            fide = fide + "#"
+            return False
+        else:
+            fide = fide + "+"
+
+    gamefens.append(fen)
+    gamefides.append(fide)
+
+    if storedfens != []:
+        gamefens.append(storedfens)
+        gamefides.append(storedfides)
+        storedfens = []
+        storedfides = []
+
+    updatepgn()
 
     try:
         evaluation = stockfish.get_evaluation()
@@ -426,142 +480,129 @@ def updateboard(algebraic):
 
     LEDbar.setvalue(led)
 
-    print(moves)
-    print()
-
     if stockfish.get_best_move() == None:  # stalemate
         return True
 
 
 def rebuildpgn(fen):
     """
-    Rebuilds PGN based on FEN from rebuildfen
+    Rebuilds PGN based on FEN from rebuildpieces
 
     args: fen
         "rn1qkbnr/pppbpp1p/6p1/3pP2Q/8/8/PPPP1PPP/RNB1KBNR w KQkq - 0 4"
     returns: None
     """
-    global gamefens
+    global gamefens, gamefides, storedfens, storedfides
 
     fen = fen.split(" ")
 
     branch, node = None, None
-    for n in reversed(sorted(gamefens.keys())):
-        for m in range(len(gamefens[n])):
-            node = m # will always be either node or max length if no branch exists
-            if gamefens[n][m][0] == fen[0]:
-                branch = n
-                break
+    for n in range(len(gamefens)):
+        if isinstance(gamefens[-(n+1)], list):
+            for m in range(len(gamefens[-(n+1)])):
+                if gamefens[-(n+1)][-(m+1)].split(" ")[0] == fen[0]:
+                    # found in a variaion
+                    branch = -(n+1)
+                    node = -(m+1)
+                    break
+            else:
+                continue
+            break
         else:
-            continue
-        break
+            if gamefens[-(n+1)].split(" ")[0] == fen[0]:
+                # found in past
+                branch = -(n+1)
+                break
 
-    data = open(
-        ("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r"
-    ).readlines()
 
     if branch == None:
         # What happens if have to create a FEN
+
+        data = open(
+            ("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r"
+        ).readlines()
+
+        start = int(data[-1].split(".")[0])  # start index
+        if data[-1][1:4] == "..." or data[-1][2:5] == "..." or data[-1][3:6] == "...":
+            move = "b"
+        else:
+            move = "w"
+        for n in gamefens[1:]:
+            if isinstance(n, str):
+                if move == "b":
+                    start += 1
+                    move = "w"
+                else:
+                    move = "b"
+        if move == "b" and fen[1] == "w":
+            start += 1
+            move = "w"
+        elif move == "w" and fen[1] == "b":
+            move = "b"
+
+        lastfen = None
         for n in range(len(data)): # What happens when previous FEN exists
             if data[n] == '[SetUp "1"]\n':
-                lastfen = data[n+1] #save fen first
-                del data[n]
-                del data[n]
+                lastfen = data[n+1]
+                data[n+1] = '[FEN "' + " ".join(fen) + '"]\n'
+                break
 
-        # remove old {}
-        old = data[-1]
-        old = old.split("{")
-        for n in range(len(old)):
-            for m in range(len(n)):
-                if m == "{":
-                    old[n] = old[n][:m]
-        old = "".join(old)
-
-        data[-1] = "{" + lastfen[:-1] + " " + old + '}\n'
-
-        data.append('[SetUp "1"]\n')
-        data.append('[FEN "' + " ".join(fen) + '"]\n')
-
-        if fen[1] == "b":
-            data.append(str(node % 2 + 1) + "...")
+        if lastfen == None:
+            data.insert(7, '[SetUp "1"]\n')
+            data.insert(8, '[FEN "' + " ".join(fen) + '"]\n')
+            data[-1] = "{" + data[-1][:-1] + "}\n"
         else:
-            data.append("")
 
-        # resets game fens
-        gamefens = {}
-        gamefen = []
-        for n in node:
-            gamefen.append("")
-        gamefens["0"] = gamefen[:]
+            data[-1] = "{" + lastfen + data[-1][:-1] + "}\n"
+
+        if move == "w":
+            data[-1] = data[-1] + str(start) + ". "
+        else:
+            data[-1] = data[-1] + str(start) + "... "
+
+        saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "w")
+        saved.writelines(data)
+
+        gamefens = [" ".join(fen)]
+        gamefides = [None]
 
     else:
-        # What happens if existed in a past state
-        print(branch) #0 indexed (start position)
-        print(node) #0 indexed
+        for n in range(len(gamefens)):
+            if -(n+1) > branch and isinstance(gamefens[-(n+1)], list):
+                del gamefens[-(n+1)]
+                del gamefides[-(n+1)]
+                branch += 1 # to allow for list changing
 
+        if node == None:
+            # exists in main branch
+            storedfens = gamefens[branch+1:] #insert after next move
+            gamefens = gamefens[:branch+1]
+            storedfides = gamefides[branch+1:] #insert after next move
+            gamefides = gamefides[:branch+1]
 
+        else: # test middle and end of side branch, as well as side branches side by side, as well as side rbanches before
+            # exists in side branch
+            storedfens = gamefens[branch][node+1:] #insert after next move
+            gamefens[branch] = gamefens[branch][:node+1]
+            storedfides = gamefides[branch][node+1:] #insert after next move
+            gamefides[branch] = gamefides[branch][:node+1]
 
-        if branch != 0: #if not in master branch
-            # move to master branch, putting everything after that point in master branch to a {}
-                # delete any {} existing inside new {} of old master
-            # take everything after that point in side branch and keep in {}
-            pass
+            sidefens = gamefens[branch][:]
+            sidefides = gamefides[branch][:]
 
-        old = data[-1]
-        olds = re.findall("\{[^{}]+\}", old)
+            newfens = [gamefens[branch-1]] + gamefens[branch+1:]
 
-        branches = []
-        for n in gamefens.keys():
-            branches.append(n)
-        branches.sort()
+            gamefens[branch] = newfens
+            gamefens = gamefens[branch-1:] + sidefens[:] + gamefens[:branch-1]
+            del gamefens[branch+1:]
+            newfides = [gamefides[branch-1]] + gamefides[branch+1:]
+            gamefides[branch] = newfides
+            gamefides = gamefides[:branch-1] + sidefides[:] + gamefides[branch:]
+            del gamefides[branch+1:]
 
-        for n in range(len(branches)):
-            if int(branches[n]) > branch:
-                del gamefens[branches[n]]
-                old.replace(olds[n], "")
-
-        # add all moves afetr this node to {}
-
-
-        data[-1] = old
-
-
-
-
-
-
-    data = open(
-        ("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r"
-    ).readlines()
-    saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "w")
-    saved.writelines(data)
-    saved.close()
-    # Series of fens at the bottom of pgn that will be chacked to see if ever lined up
-    # if so, comment out all moves after that point
-    # if not, custom starting position and new moves from 1.
-    # need way to go over even commented out code if further RFID adjustments
-    # need way to comment out custom starting position if further RFID adjustments
-
-    print(fen)
-
-    pass
-
-
-def rebuildfen(grid):
-    """
-    Rebuilds FEN based on grid from rebuildpieces
-
-    args: grid
-        [['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'], ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'], ['', '', '', '', '', '', '', ''], ['', '', '', '', '', '', '', ''], ['', '', '', '', 'P', '', '', ''], ['', '', '', '', '', '', '', ''], ['P', 'P', 'P', 'P', '', 'P', 'P', 'P'], ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']]
-    returns: fen
-        "rn1qkbnr/pppbpp1p/6p1/3pP2Q/8/8/PPPP1PPP/RNB1KBNR w KQkq - 0 4"
-    """
-    # Series of fens at the bottom of pgn that will be chacked to see if ever lined up
-    # if not, build fen with fingers crossed for en passent, kings, etc (ask user whos turn)
-
-    print(grid)
-
-    pass
+    stockfish.set_fen_position(
+        " ".join(fen)
+    )
 
 
 def rebuildpieces(grid):
@@ -572,15 +613,23 @@ def rebuildpieces(grid):
         [['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'], ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'], ['', '', '', '', '', '', '', ''], ['', '', '', '', '', '', '', ''], ['', '', '', '', 'P', '', '', ''], ['', '', '', '', '', '', '', ''], ['P', 'P', 'P', 'P', '', 'P', 'P', 'P'], ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']]
     returns: None
     """
-    time.sleep(0.5)
+
+    print("Give a fen state to go to")
+    fen = input().split(" ")
+    print()
     # entirely user stuff
     # scan a piece or cancel
     # scan resultant pieces
     # loop both of above if required
 
-    print(grid)
 
-    pass
+    # ask for whos turn it is if not in previous list
+    # if not any(fen[0] in n.split(" ")[0] for n in hey):
+        # display
+        # black or white buttons
+
+    #print(grid)
+    rebuildpgn(" ".join(fen))
 
 
 def enginemove(fen):
@@ -778,7 +827,7 @@ def gameover(result):
 
 
 def newgame():
-    global round, difficulty, player, white, black, gamefens
+    global round, difficulty, player, white, black, gamefens, gamefides, storedfens
     """
     Determines values required to start a new game
 
@@ -850,13 +899,22 @@ def newgame():
         saved.write(white)  # Determined by above
         saved.write('"]\n[Black "')
         saved.write(black)  # Determined by above
-        saved.write('"]\n[Result "*"]\n\n')
+        #saved.write('"]\n[Result "*"]\n\n1. ')
+        saved.write('"]\n[Result "*"]\n\n1. e4 Nc6 2. e5 e6 3. d4 d6 (3... d5 4. exd6 Qxd6) 4. a3 (4. exd6 Bxd6) ')
         saved.close()
         stockfish.set_fen_position(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         )
 
-        gamefens = {"0":[]}
+        gamefens = ['rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1']
+        gamefides = [None]
+        storedfens = []
+        #gamefens = ['rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1', 'r1bqkbnr/pppppppp/2n5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2', 'r1bqkbnr/pppppppp/2n5/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2', 'r1bqkbnr/pppp1ppp/2n1p3/4P3/8/8/PPPP1PPP/RNBQKBNR w KQkq - 0 3', 'r1bqkbnr/pppp1ppp/2n1p3/4P3/3P4/8/PPP2PPP/RNBQKBNR b KQkq d3 0 3', 'r1bqkbnr/ppp2ppp/2n1p3/3pP3/3P4/8/PPP2PPP/RNBQKBNR w KQkq d6 0 4', ['r1bqkbnr/ppp2ppp/2npp3/4P3/3P4/8/PPP2PPP/RNBQKBNR w KQkq - 0 4', 'r1bqkbnr/ppp2ppp/2nPp3/8/3P4/8/PPP2PPP/RNBQKBNR b KQkq - 0 4', 'r1bqk1nr/ppp2ppp/2nbp3/8/3P4/8/PPP2PPP/RNBQKBNR w KQkq - 0 5'], 'r1bqkbnr/ppp2ppp/2nPp3/8/3P4/8/PPP2PPP/RNBQKBNR b KQkq - 0 4', 'r1b1kbnr/ppp2ppp/2nqp3/8/3P4/8/PPP2PPP/RNBQKBNR w KQkq - 0 5']
+        #gamefides = ['e4', 'Nc6', 'e5', 'e6', 'd4', 'd5', ['d6', 'exd6', 'Bxd6'], 'exd6', 'Qxd6']
+
+        #rebuildpgn('rnbqkb1r/pp1ppp1p/5np1/2p5/2P5/4P1P1/PP1P1P1P/RNBQKBNR w KQkq - 1 4')
+
+        #updatepgn()
         # stockfish.set_fen_position("k7/7P/1K6/8/8/8/8/8 w - - 0 1")
 
         LEDbar.setvalue([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
@@ -878,7 +936,7 @@ def boardoff():
         saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "w")
         saved.writelines(data)
         saved.close()
-    if data[-1] == "\n":
+    if data[-1] == "1. ":
         os.remove("../PGNs/" + date + "/Game" + str(round) + ".txt")
 
     LEDbar.clear()
@@ -902,7 +960,7 @@ def startup():
     GPIO.setup(33, GPIO.IN)
     GPIO.add_event_detect(33, GPIO.RISING)  # Button 2
     # if GPIO.event_detected(33): # True or False
-    #   print(RFID.read_no_block())
+    #   RFID.read_no_block()
     # detect 5 and 6 not being connected due to switch
 
     newgame()
