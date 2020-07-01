@@ -10,8 +10,6 @@
 
 ### Next Tasks:
 
-- RFID stuff
-
 - LED changes direction depending on who starts
 
 - Draw on repetition/50 move?
@@ -24,6 +22,8 @@
  
 - Reed Switch layout
 
+- RFID stuff
+
 - Pieces to middle to resign/draw
 
 - Turn on on startup
@@ -31,6 +31,27 @@
 - Turn off on power down
 
 <br>
+
+### Glitch Log
+
+- updatepgn was not running every move? (No errors?)
+
+- A move did not register properly?
+
+``` Python
+
+Traceback (most recent call last):
+  File "chessscript.py", line 987, in <module>
+    startup()
+  File "chessscript.py", line 968, in startup
+    newgame()
+  File "chessscript.py", line 924, in newgame
+    main()
+  File "chessscript.py", line 706, in main
+    last = grid[int(move[0][1]) - 1][alphabet.index(move[0][0])]
+ValueError: invalid literal for int() with base 10: 'a')```
+
+-
 
 ## Description
 

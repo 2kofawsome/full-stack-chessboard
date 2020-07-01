@@ -474,11 +474,12 @@ def updateboard(algebraic):
                 led = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1]
             elif evaluation["value"] <= -1000:
                 led = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1]
-    except IndexError as E:
-        print(E)
-        led = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
-    LEDbar.setvalue(led)
+            LEDbar.setvalue(led)
+
+    except UnboundLocalError:
+        # sometimes this breaks? so LED stays constant
+        pass
 
     if stockfish.get_best_move() == None:  # stalemate
         return True
@@ -684,6 +685,7 @@ def main():  # this should loop
         GPIO.event_detected(31)  # clear detection
         GPIO.event_detected(33)
         while True:
+            break #temp
             # Tracks board/reed switch movements
             # once player turn is determined
             # figure out what board/move makes sense from hardware
@@ -700,7 +702,7 @@ def main():  # this should loop
         move = input()  # castling uses king movement only
         print()
         move = [move[:2], move[2:]]
-
+        print(move[0])
         last = grid[int(move[0][1]) - 1][alphabet.index(move[0][0])]
         if (last == "P" and move[1][1] == "8") or (last == "p" and move[1][1] == "1"):
             LCD.update("Scan Promoted Piece", 1)
