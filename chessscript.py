@@ -133,6 +133,35 @@ def ischeck():
     return False
 
 
+def enginemove(fen):
+    """
+    Sends move to display if it is engine's turn
+
+    args: fen
+        "rn1qkbnr/pppbpp1p/6p1/3pP2Q/8/8/PPPP1PPP/RNB1KBNR w KQkq - 0 4"
+    returns: None
+    """
+    if "Engine" in white or "Engine" in black:
+        LCD.update("Calculating.", 1)
+        LCD.update("", 2)
+        if player == "w" and "w" not in fen:  # check best move (skip if players turn)
+            move = stockfish.get_best_move_time(33 * 1.5 ** (difficulty + 1))
+            if len(move) == 5:
+                move = [move[:2], move[2:4], move[4].lower()]
+            else:
+                move = [move[:2], move[2:4]]
+            LCD.update(tofide(move) + " (" + move[0] + " -> " + move[1] + ")", 1)
+            LCD.update("  Scan Pieces ->", 2)
+        elif player == "b" and "w" in fen:
+            move = stockfish.get_best_move_time(33 * 1.5 ** (difficulty + 1))
+            if len(move) == 5:
+                move = [move[:2], move[2:4], move[4].upper()]
+            else:
+                move = [move[:2], move[2:4]]
+            LCD.update(tofide(move) + " (" + move[0] + " -> " + move[1] + ")", 1)
+            LCD.update("  Scan Pieces ->", 2)
+
+
 def tofide(algebraic):
     """
     Updates and saves PGN based on a valid move
@@ -314,13 +343,17 @@ def updatefen(algebraic):
     if last == "K":
         if algebraic[0][0] == "e" and algebraic[1][0] == "g":
             grid[0][5] = "R"
+            grid[0][7] = ""
         elif algebraic[0][0] == "e" and algebraic[1][0] == "c":
             grid[0][3] = "R"
+            grid[0][1] = ""
     elif last == "k":
         if algebraic[0][0] == "e" and algebraic[1][0] == "g":
             grid[7][5] = "r"
+            grid[7][7] = ""
         elif algebraic[0][0] == "e" and algebraic[1][0] == "c":
             grid[7][3] = "r"
+            grid[7][1] = ""
     elif last == "P" and algebraic[1] == ep:
         grid[int(algebraic[1][1]) - 2][alphabet.index(algebraic[1][0])] = ""
     elif last == "p" and algebraic[1] == ep:
@@ -361,8 +394,6 @@ def updatepgn(): # REMADE
     else:
         move = "w"
         data[-1] = ""
-
-    print(gamefides)
 
     for n in range(1, len(gamefides)):
         if isinstance(gamefides[n], list):
@@ -406,6 +437,8 @@ def updatepgn(): # REMADE
                 start += 1
                 move = "w"
 
+    data[-1] = data[-1] + "\n"
+
     saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "w")
     saved.writelines(data)
     saved.close()
@@ -419,7 +452,7 @@ def updateboard(algebraic):
         ["e2", "e4"] or ["e2", "e4", "Q"]
     returns: None or False if Checkmate
     """
-    global gamefens, gamefides, storedfens, storedfides
+    global gamefens, gamefens0, gamefides, storedfens, storedfens0, storedfides
     fen = stockfish.get_fen_position()
     fen = fen.split(" ")
 
@@ -428,20 +461,24 @@ def updateboard(algebraic):
     fen = updatefen(algebraic)
     stockfish.set_fen_position(fen)
 
+    end = False
     if ischeck():
         if stockfish.get_best_move() == None:
             fide = fide + "#"
-            return False
+            end = True
         else:
             fide = fide + "+"
 
     gamefens.append(fen)
+    gamefens0.append(fen.split(" ")[0])
     gamefides.append(fide)
 
     if storedfens != []:
         gamefens.append(storedfens)
+        gamefens0.append(storedfens0)
         gamefides.append(storedfides)
         storedfens = []
+        storedfens0 = []
         storedfides = []
 
     updatepgn()
@@ -475,15 +512,44 @@ def updateboard(algebraic):
             elif evaluation["value"] <= -1000:
                 led = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1]
 
-            LEDbar.setvalue(led)
+        if player == "b":
+            led.reverse()
+        LEDbar.setvalue(led)
 
     except UnboundLocalError:
         # sometimes this breaks? so LED stays constant
         pass
 
-    if stockfish.get_best_move() == None:  # stalemate
-        return True
+    # checkmate
+    if end == True:
+        return False
 
+    # stalemates
+    if stockfish.get_best_move() == None:
+        return True
+    pieces = []
+    for n in fen:
+        if n == " ":
+            break
+        if n != "/" and not n.isnumeric():
+            pieces.append(n)
+    pieces.sort()
+    if (pieces == ['K', 'k'] or pieces == ['K', 'k', 'n'] or pieces == ['K', 'b', 'k'] or
+            pieces == ['K', 'N', 'k'] or pieces == ['B', 'K', 'k']):
+        return True
+    if pieces == ['B', 'K', 'b', 'k']: # check if same colour
+        grid = togrid(fen.split(" ")[0])
+        squares = []
+        for n in range(8):
+            for m in range(8):
+                if grid[n][m].lower() == "b":
+                    squares.append(n%2 == m%2)
+        if squares[0] == squares[1]:
+            return True
+    if gamefens0.count(fen.split(" ")[0]) > 2: #3 fold repetition
+        return True
+    if int(fen.split(" ")[4]) > 49: #50 count
+        return True
 
 def rebuildpgn(fen):
     """
@@ -493,7 +559,7 @@ def rebuildpgn(fen):
         "rn1qkbnr/pppbpp1p/6p1/3pP2Q/8/8/PPPP1PPP/RNB1KBNR w KQkq - 0 4"
     returns: None
     """
-    global gamefens, gamefides, storedfens, storedfides
+    global gamefens, gamefens0, gamefides, storedfens, storedfens0, storedfides
 
     fen = fen.split(" ")
 
@@ -501,7 +567,7 @@ def rebuildpgn(fen):
     for n in range(len(gamefens)):
         if isinstance(gamefens[-(n+1)], list):
             for m in range(len(gamefens[-(n+1)])):
-                if gamefens[-(n+1)][-(m+1)].split(" ")[0] == fen[0]:
+                if gamefens0[-(n+1)][-(m+1)][0] == fen[0]:
                     # found in a variaion
                     branch = -(n+1)
                     node = -(m+1)
@@ -510,7 +576,7 @@ def rebuildpgn(fen):
                 continue
             break
         else:
-            if gamefens[-(n+1)].split(" ")[0] == fen[0]:
+            if gamefens0[-(n+1)] == fen[0]:
                 # found in past
                 branch = -(n+1)
                 break
@@ -565,12 +631,14 @@ def rebuildpgn(fen):
         saved.writelines(data)
 
         gamefens = [" ".join(fen)]
+        gamefens0 = [fen[0]]
         gamefides = [None]
 
     else:
         for n in range(len(gamefens)):
             if -(n+1) > branch and isinstance(gamefens[-(n+1)], list):
                 del gamefens[-(n+1)]
+                del gamefens0[-(n+1)]
                 del gamefides[-(n+1)]
                 branch += 1 # to allow for list changing
 
@@ -578,6 +646,8 @@ def rebuildpgn(fen):
             # exists in main branch
             storedfens = gamefens[branch+1:] #insert after next move
             gamefens = gamefens[:branch+1]
+            storedfens0 = gamefens0[branch+1:] #insert after next move
+            gamefens0 = gamefens0[:branch+1]
             storedfides = gamefides[branch+1:] #insert after next move
             gamefides = gamefides[:branch+1]
 
@@ -585,17 +655,25 @@ def rebuildpgn(fen):
             # exists in side branch
             storedfens = gamefens[branch][node+1:] #insert after next move
             gamefens[branch] = gamefens[branch][:node+1]
+            storedfens0 = gamefens0[branch][node+1:] #insert after next move
+            gamefens0[branch] = gamefens0[branch][:node+1]
             storedfides = gamefides[branch][node+1:] #insert after next move
             gamefides[branch] = gamefides[branch][:node+1]
 
             sidefens = gamefens[branch][:]
+            sidefens0 = gamefens0[branch][:]
             sidefides = gamefides[branch][:]
 
             newfens = [gamefens[branch-1]] + gamefens[branch+1:]
-
             gamefens[branch] = newfens
             gamefens = gamefens[branch-1:] + sidefens[:] + gamefens[:branch-1]
             del gamefens[branch+1:]
+
+            newfens0 = [gamefens0[branch-1]] + gamefens0[branch+1:]
+            gamefens0[branch] = newfens0
+            gamefens0 = gamefens0[branch-1:] + sidefens0[:] + gamefens0[:branch-1]
+            del gamefens0[branch+1:]
+
             newfides = [gamefides[branch-1]] + gamefides[branch+1:]
             gamefides[branch] = newfides
             gamefides = gamefides[:branch-1] + sidefides[:] + gamefides[branch:]
@@ -629,110 +707,7 @@ def rebuildpieces(grid):
         # display
         # black or white buttons
 
-    #print(grid)
     rebuildpgn(" ".join(fen))
-
-
-def enginemove(fen):
-    """
-    Sends move to display if it is engine's turn
-
-    args: fen
-        "rn1qkbnr/pppbpp1p/6p1/3pP2Q/8/8/PPPP1PPP/RNB1KBNR w KQkq - 0 4"
-    returns: None
-    """
-    if "Engine" in white or "Engine" in black:
-        LCD.update("Calculating.", 1)
-        LCD.update("", 2)
-        if player == "w" and "w" not in fen:  # check best move (skip if players turn)
-            move = stockfish.get_best_move_time(33 * 1.5 ** (difficulty + 1))
-            if len(move) == 5:
-                move = [move[:2], move[2:4], move[4].lower()]
-            else:
-                move = [move[:2], move[2:4]]
-            LCD.update(tofide(move) + " (" + move[0] + " -> " + move[1] + ")", 1)
-            LCD.update("  Scan Pieces ->", 2)
-        elif player == "b" and "w" in fen:
-            move = stockfish.get_best_move_time(33 * 1.5 ** (difficulty + 1))
-            if len(move) == 5:
-                move = [move[:2], move[2:4], move[4].upper()]
-            else:
-                move = [move[:2], move[2:4]]
-            LCD.update(tofide(move) + " (" + move[0] + " -> " + move[1] + ")", 1)
-            LCD.update("  Scan Pieces ->", 2)
-
-
-def main():  # this should loop
-    """
-    Listens for pieces movements, makes sure they are okay, then triggers update
-
-    args: None
-    returns: None
-
-    """
-    while True:
-        fen = stockfish.get_fen_position()
-        fen = fen.split(" ")
-        enginemove(fen)
-        if fen[1] == "w" and "Engine" not in white:
-            LCD.update("White's move", 1)
-        elif fen[1] == "b" and "Engine" not in black:
-            LCD.update("Black's move", 1)
-        LCD.update("  Scan Pieces ->", 2)
-        grid = togrid(fen[0])
-
-        changed = False
-        GPIO.event_detected(31)  # clear detection
-        GPIO.event_detected(33)
-        while True:
-            break #temp
-            # Tracks board/reed switch movements
-            # once player turn is determined
-            # figure out what board/move makes sense from hardware
-            if GPIO.event_detected(33):
-                break
-            elif GPIO.event_detected(31):
-                changed = True
-                rebuildpieces(grid)
-                break
-        if changed == True:
-            continue
-
-        print("give move in 'e2e4'")
-        move = input()  # castling uses king movement only
-        print()
-        move = [move[:2], move[2:]]
-        print(move[0])
-        last = grid[int(move[0][1]) - 1][alphabet.index(move[0][0])]
-        if (last == "P" and move[1][1] == "8") or (last == "p" and move[1][1] == "1"):
-            LCD.update("Scan Promoted Piece", 1)
-            LCD.update("", 2)
-            while True:
-                piece = RFID.read()[1][0]
-                if not (
-                    piece.upper() == "Q"
-                    or piece.upper() == "R"
-                    or piece.upper() == "B"
-                    or piece.upper() == "N"
-                ):
-                    LCD.update("Must be a Queen, Knight, Rook, or Bishop", 2)
-                elif piece.isupper() and last.islower():
-                    LCD.update("Must be a Black", 2)
-                elif piece.islower() and last.isupper():
-                    LCD.update("Must be a White", 2)
-                else:
-                    break
-            move.append(piece)
-
-        if not stockfish.is_move_correct("".join(move)):
-            LCD.update("Move Not Correct", 2)
-            time.sleep(1)
-            continue
-
-        status = updateboard(move)
-        if status != None:  # True is stalemate, False is checkmate
-            break
-    gameover(status)
 
 
 def players(pin):
@@ -777,6 +752,82 @@ def players(pin):
     # if move, show Engine or dont
 
 
+def main():  # this should loop
+    """
+    Listens for pieces movements, makes sure they are okay, then triggers update
+
+    args: None
+    returns: None
+
+    """
+    while True:
+        fen = stockfish.get_fen_position()
+        fen = fen.split(" ")
+        enginemove(fen)
+        if fen[1] == "w" and "Engine" not in white:
+            LCD.update("White's move", 1)
+        elif fen[1] == "b" and "Engine" not in black:
+            LCD.update("Black's move", 1)
+        LCD.update("  Scan Pieces ->", 2)
+        grid = togrid(fen[0])
+
+        changed = False
+        GPIO.event_detected(31)  # clear detection
+        GPIO.event_detected(33)
+        while True:
+            break #temp
+            # Tracks board/reed switch movements
+            # once player turn is determined
+            # figure out what board/move makes sense from hardware
+            if GPIO.event_detected(33):
+                break
+            elif GPIO.event_detected(31):
+                changed = True
+                rebuildpieces(grid)
+                break
+        if changed == True:
+            continue
+
+        print("give move in 'e2e4'")
+        move = input()  # castling uses king movement only
+        print()
+        move = [move[:2], move[2:]]
+        last = grid[int(move[0][1]) - 1][alphabet.index(move[0][0])]
+        if (last == "P" and move[1][1] == "8") or (last == "p" and move[1][1] == "1"):
+            LCD.update("Scan Promoted Piece", 1)
+            LCD.update("", 2)
+            while True:
+                piece = RFID.read()[1][0]
+                if not (
+                    piece.upper() == "Q"
+                    or piece.upper() == "R"
+                    or piece.upper() == "B"
+                    or piece.upper() == "N"
+                ):
+                    LCD.update("Must be a Queen, Knight, Rook, or Bishop", 2)
+                elif piece.isupper() and last.islower():
+                    LCD.update("Must be a Black", 2)
+                elif piece.islower() and last.isupper():
+                    LCD.update("Must be a White", 2)
+                else:
+                    break
+            move.append(piece)
+
+        if not stockfish.is_move_correct("".join(move)):
+            print("--------")
+            print(grid)
+            print(move)
+            print("--------")
+            LCD.update("Move Not Correct", 2)
+            time.sleep(1)
+            continue
+
+        status = updateboard(move)
+        if status != None:  # True is stalemate, False is checkmate
+            break
+    gameover(status)
+
+
 def gameover(result):
     """
     Finishes Game after checkmate/stalemate/resign/draw
@@ -793,7 +844,7 @@ def gameover(result):
         data = open(
             ("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r"
         ).readlines()
-        data[6] = '[Result "1/2-1/2"]'
+        data[6] = '[Result "1/2-1/2"]\n'
     else:
         fen = stockfish.get_fen_position()
         fen = fen.split(" ")
@@ -805,7 +856,7 @@ def gameover(result):
             data = open(
                 ("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r"
             ).readlines()
-            data[6] = '[Result "1-0"]'
+            data[6] = '[Result "1-0"]\n'
         else:
             LCD.update("Checkmate for Black", 1)
             saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "a")
@@ -814,7 +865,7 @@ def gameover(result):
             data = open(
                 ("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r"
             ).readlines()
-            data[6] = '[Result "0-1"]'
+            data[6] = '[Result "0-1"]\n'
 
     saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "w")
     saved.writelines(data)
@@ -829,7 +880,7 @@ def gameover(result):
 
 
 def newgame():
-    global round, difficulty, player, white, black, gamefens, gamefides, storedfens
+    global round, difficulty, player, white, black, gamefens, gamefens0, gamefides, storedfens, storedfens0, storedfides
     """
     Determines values required to start a new game
 
@@ -901,23 +952,18 @@ def newgame():
         saved.write(white)  # Determined by above
         saved.write('"]\n[Black "')
         saved.write(black)  # Determined by above
-        #saved.write('"]\n[Result "*"]\n\n1. ')
-        saved.write('"]\n[Result "*"]\n\n1. e4 Nc6 2. e5 e6 3. d4 d6 (3... d5 4. exd6 Qxd6) 4. a3 (4. exd6 Bxd6) ')
+        saved.write('"]\n[Result "*"]\n\n1. ')
         saved.close()
         stockfish.set_fen_position(
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         )
 
         gamefens = ['rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1']
+        gamefens0 = ['rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR']
         gamefides = [None]
         storedfens = []
-        #gamefens = ['rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1', 'r1bqkbnr/pppppppp/2n5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2', 'r1bqkbnr/pppppppp/2n5/4P3/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2', 'r1bqkbnr/pppp1ppp/2n1p3/4P3/8/8/PPPP1PPP/RNBQKBNR w KQkq - 0 3', 'r1bqkbnr/pppp1ppp/2n1p3/4P3/3P4/8/PPP2PPP/RNBQKBNR b KQkq d3 0 3', 'r1bqkbnr/ppp2ppp/2n1p3/3pP3/3P4/8/PPP2PPP/RNBQKBNR w KQkq d6 0 4', ['r1bqkbnr/ppp2ppp/2npp3/4P3/3P4/8/PPP2PPP/RNBQKBNR w KQkq - 0 4', 'r1bqkbnr/ppp2ppp/2nPp3/8/3P4/8/PPP2PPP/RNBQKBNR b KQkq - 0 4', 'r1bqk1nr/ppp2ppp/2nbp3/8/3P4/8/PPP2PPP/RNBQKBNR w KQkq - 0 5'], 'r1bqkbnr/ppp2ppp/2nPp3/8/3P4/8/PPP2PPP/RNBQKBNR b KQkq - 0 4', 'r1b1kbnr/ppp2ppp/2nqp3/8/3P4/8/PPP2PPP/RNBQKBNR w KQkq - 0 5']
-        #gamefides = ['e4', 'Nc6', 'e5', 'e6', 'd4', 'd5', ['d6', 'exd6', 'Bxd6'], 'exd6', 'Qxd6']
-
-        #rebuildpgn('rnbqkb1r/pp1ppp1p/5np1/2p5/2P5/4P1P1/PP1P1P1P/RNBQKBNR w KQkq - 1 4')
-
-        #updatepgn()
-        # stockfish.set_fen_position("k7/7P/1K6/8/8/8/8/8 w - - 0 1")
+        storedfens0 = []
+        storedfides = []
 
         LEDbar.setvalue([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
 
@@ -954,6 +1000,7 @@ def startup():
     args: None
     returns: None
     """
+    global date
     # switch for LED is hardware only (no software)
     GPIO.setup(29, GPIO.IN)
     GPIO.add_event_detect(29, GPIO.BOTH, callback=players)  # single/multi switch
@@ -961,9 +1008,12 @@ def startup():
     GPIO.add_event_detect(31, GPIO.RISING)  # Button 1
     GPIO.setup(33, GPIO.IN)
     GPIO.add_event_detect(33, GPIO.RISING)  # Button 2
-    # if GPIO.event_detected(33): # True or False
-    #   RFID.read_no_block()
     # detect 5 and 6 not being connected due to switch
+    date = datetime.datetime.now().strftime("%Y.%m.%d")
+    if "PGNs" not in os.listdir(".."):
+        os.makedirs("../PGNs")
+    if date not in os.listdir("../PGNs"):
+        os.makedirs("../PGNs/" + date)
 
     newgame()
 
@@ -975,12 +1025,6 @@ LCD = lcddriver.lcd()
 LEDbar = driver74HC595.the74HC595()
 RFID = SimpleMFRC522()
 stockfish = Stockfish("/home/pi/full-stack-chessboard/stockfish", 1)
-
-date = datetime.datetime.now().strftime("%Y.%m.%d")
-if "PGNs" not in os.listdir(".."):
-    os.makedirs("../PGNs")
-if date not in os.listdir("../PGNs"):
-    os.makedirs("../PGNs/" + date)
 
 try:
     time.sleep(1)

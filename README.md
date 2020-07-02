@@ -10,9 +10,7 @@
 
 ### Next Tasks:
 
-- LED changes direction depending on who starts
-
-- Draw on repetition/50 move?
+- Pre-RFID ask for "w" or "b" turn
 
 <hr>
 
@@ -21,6 +19,8 @@
 - Choose side you play as
  
 - Reed Switch layout
+
+- Detect Piece movements
 
 - RFID stuff
 
@@ -33,8 +33,6 @@
 <br>
 
 ### Glitch Log
-
-- updatepgn was not running every move? (No errors?)
 
 - A move did not register properly?
 
