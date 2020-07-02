@@ -375,7 +375,7 @@ def updatefen(algebraic):
     return fen
 
 
-def updatepgn(): # REMADE
+def updatepgn():  # REMADE
     """
     Updates and saves PGN based on gamefens and gamefides
 
@@ -383,11 +383,9 @@ def updatepgn(): # REMADE
     returns: None
     """
 
-    data = open(
-        ("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r"
-    ).readlines()
+    data = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r").readlines()
 
-    start = int(data[-1].split(".")[0]) # start index
+    start = int(data[-1].split(".")[0])  # start index
     if data[-1][1:4] == "..." or data[-1][2:5] == "..." or data[-1][3:6] == "...":
         move = "b"
         data[-1] = str(start) + "..."
@@ -410,7 +408,7 @@ def updatepgn(): # REMADE
                 if tempmove == "w":
                     data[-1] = data[-1] + str(tempstart) + ". "
 
-                if m == len(gamefides[n])-1:
+                if m == len(gamefides[n]) - 1:
                     data[-1] = data[-1] + gamefides[n][m] + ") "
                     break
                 else:
@@ -422,7 +420,9 @@ def updatepgn(): # REMADE
                     tempstart += 1
                     tempmove = "w"
 
-            if move == "b" and n != len(gamefides)-1: # for next portion unless last value
+            if (
+                move == "b" and n != len(gamefides) - 1
+            ):  # for next portion unless last value
                 data[-1] = data[-1] + str(tempstart) + "... "
 
         else:
@@ -534,22 +534,28 @@ def updateboard(algebraic):
         if n != "/" and not n.isnumeric():
             pieces.append(n)
     pieces.sort()
-    if (pieces == ['K', 'k'] or pieces == ['K', 'k', 'n'] or pieces == ['K', 'b', 'k'] or
-            pieces == ['K', 'N', 'k'] or pieces == ['B', 'K', 'k']):
+    if (
+        pieces == ["K", "k"]
+        or pieces == ["K", "k", "n"]
+        or pieces == ["K", "b", "k"]
+        or pieces == ["K", "N", "k"]
+        or pieces == ["B", "K", "k"]
+    ):
         return True
-    if pieces == ['B', 'K', 'b', 'k']: # check if same colour
+    if pieces == ["B", "K", "b", "k"]:  # check if same colour
         grid = togrid(fen.split(" ")[0])
         squares = []
         for n in range(8):
             for m in range(8):
                 if grid[n][m].lower() == "b":
-                    squares.append(n%2 == m%2)
+                    squares.append(n % 2 == m % 2)
         if squares[0] == squares[1]:
             return True
-    if gamefens0.count(fen.split(" ")[0]) > 2: #3 fold repetition
+    if gamefens0.count(fen.split(" ")[0]) > 2:  # 3 fold repetition
         return True
-    if int(fen.split(" ")[4]) > 49: #50 count
+    if int(fen.split(" ")[4]) > 49:  # 50 count
         return True
+
 
 def rebuildpgn(fen):
     """
@@ -565,22 +571,21 @@ def rebuildpgn(fen):
 
     branch, node = None, None
     for n in range(len(gamefens)):
-        if isinstance(gamefens[-(n+1)], list):
-            for m in range(len(gamefens[-(n+1)])):
-                if gamefens0[-(n+1)][-(m+1)][0] == fen[0]:
+        if isinstance(gamefens[-(n + 1)], list):
+            for m in range(len(gamefens[-(n + 1)])):
+                if gamefens0[-(n + 1)][-(m + 1)][0] == fen[0]:
                     # found in a variaion
-                    branch = -(n+1)
-                    node = -(m+1)
+                    branch = -(n + 1)
+                    node = -(m + 1)
                     break
             else:
                 continue
             break
         else:
-            if gamefens0[-(n+1)] == fen[0]:
+            if gamefens0[-(n + 1)] == fen[0]:
                 # found in past
-                branch = -(n+1)
+                branch = -(n + 1)
                 break
-
 
     if branch == None:
         # What happens if have to create a FEN
@@ -608,10 +613,10 @@ def rebuildpgn(fen):
             move = "b"
 
         lastfen = None
-        for n in range(len(data)): # What happens when previous FEN exists
+        for n in range(len(data)):  # What happens when previous FEN exists
             if data[n] == '[SetUp "1"]\n':
-                lastfen = data[n+1]
-                data[n+1] = '[FEN "' + " ".join(fen) + '"]\n'
+                lastfen = data[n + 1]
+                data[n + 1] = '[FEN "' + " ".join(fen) + '"]\n'
                 break
 
         if lastfen == None:
@@ -636,52 +641,50 @@ def rebuildpgn(fen):
 
     else:
         for n in range(len(gamefens)):
-            if -(n+1) > branch and isinstance(gamefens[-(n+1)], list):
-                del gamefens[-(n+1)]
-                del gamefens0[-(n+1)]
-                del gamefides[-(n+1)]
-                branch += 1 # to allow for list changing
+            if -(n + 1) > branch and isinstance(gamefens[-(n + 1)], list):
+                del gamefens[-(n + 1)]
+                del gamefens0[-(n + 1)]
+                del gamefides[-(n + 1)]
+                branch += 1  # to allow for list changing
 
         if node == None:
             # exists in main branch
-            storedfens = gamefens[branch+1:] #insert after next move
-            gamefens = gamefens[:branch+1]
-            storedfens0 = gamefens0[branch+1:] #insert after next move
-            gamefens0 = gamefens0[:branch+1]
-            storedfides = gamefides[branch+1:] #insert after next move
-            gamefides = gamefides[:branch+1]
+            storedfens = gamefens[branch + 1 :]  # insert after next move
+            gamefens = gamefens[: branch + 1]
+            storedfens0 = gamefens0[branch + 1 :]  # insert after next move
+            gamefens0 = gamefens0[: branch + 1]
+            storedfides = gamefides[branch + 1 :]  # insert after next move
+            gamefides = gamefides[: branch + 1]
 
-        else: # test middle and end of side branch, as well as side branches side by side, as well as side rbanches before
+        else:  # test middle and end of side branch, as well as side branches side by side, as well as side rbanches before
             # exists in side branch
-            storedfens = gamefens[branch][node+1:] #insert after next move
-            gamefens[branch] = gamefens[branch][:node+1]
-            storedfens0 = gamefens0[branch][node+1:] #insert after next move
-            gamefens0[branch] = gamefens0[branch][:node+1]
-            storedfides = gamefides[branch][node+1:] #insert after next move
-            gamefides[branch] = gamefides[branch][:node+1]
+            storedfens = gamefens[branch][node + 1 :]  # insert after next move
+            gamefens[branch] = gamefens[branch][: node + 1]
+            storedfens0 = gamefens0[branch][node + 1 :]  # insert after next move
+            gamefens0[branch] = gamefens0[branch][: node + 1]
+            storedfides = gamefides[branch][node + 1 :]  # insert after next move
+            gamefides[branch] = gamefides[branch][: node + 1]
 
             sidefens = gamefens[branch][:]
             sidefens0 = gamefens0[branch][:]
             sidefides = gamefides[branch][:]
 
-            newfens = [gamefens[branch-1]] + gamefens[branch+1:]
+            newfens = [gamefens[branch - 1]] + gamefens[branch + 1 :]
             gamefens[branch] = newfens
-            gamefens = gamefens[branch-1:] + sidefens[:] + gamefens[:branch-1]
-            del gamefens[branch+1:]
+            gamefens = gamefens[branch - 1 :] + sidefens[:] + gamefens[: branch - 1]
+            del gamefens[branch + 1 :]
 
-            newfens0 = [gamefens0[branch-1]] + gamefens0[branch+1:]
+            newfens0 = [gamefens0[branch - 1]] + gamefens0[branch + 1 :]
             gamefens0[branch] = newfens0
-            gamefens0 = gamefens0[branch-1:] + sidefens0[:] + gamefens0[:branch-1]
-            del gamefens0[branch+1:]
+            gamefens0 = gamefens0[branch - 1 :] + sidefens0[:] + gamefens0[: branch - 1]
+            del gamefens0[branch + 1 :]
 
-            newfides = [gamefides[branch-1]] + gamefides[branch+1:]
+            newfides = [gamefides[branch - 1]] + gamefides[branch + 1 :]
             gamefides[branch] = newfides
-            gamefides = gamefides[:branch-1] + sidefides[:] + gamefides[branch:]
-            del gamefides[branch+1:]
+            gamefides = gamefides[: branch - 1] + sidefides[:] + gamefides[branch:]
+            del gamefides[branch + 1 :]
 
-    stockfish.set_fen_position(
-        " ".join(fen)
-    )
+    stockfish.set_fen_position(" ".join(fen))
 
 
 def rebuildpieces(grid):
@@ -701,11 +704,10 @@ def rebuildpieces(grid):
     # scan resultant pieces
     # loop both of above if required
 
-
     # ask for whos turn it is if not in previous list
     # if not any(fen[0] in n.split(" ")[0] for n in hey):
-        # display
-        # black or white buttons
+    # display
+    # black or white buttons
 
     rebuildpgn(" ".join(fen))
 
@@ -775,7 +777,7 @@ def main():  # this should loop
         GPIO.event_detected(31)  # clear detection
         GPIO.event_detected(33)
         while True:
-            break #temp
+            break  # temp
             # Tracks board/reed switch movements
             # once player turn is determined
             # figure out what board/move makes sense from hardware
@@ -958,8 +960,8 @@ def newgame():
             "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
         )
 
-        gamefens = ['rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1']
-        gamefens0 = ['rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR']
+        gamefens = ["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"]
+        gamefens0 = ["rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"]
         gamefides = [None]
         storedfens = []
         storedfens0 = []

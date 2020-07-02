@@ -32,44 +32,24 @@
 
 <br>
 
-### Glitch Log
-
-- A move did not register properly?
-
-``` Python
-
-Traceback (most recent call last):
-  File "chessscript.py", line 987, in <module>
-    startup()
-  File "chessscript.py", line 968, in startup
-    newgame()
-  File "chessscript.py", line 924, in newgame
-    main()
-  File "chessscript.py", line 706, in main
-    last = grid[int(move[0][1]) - 1][alphabet.index(move[0][0])]
-ValueError: invalid literal for int() with base 10: 'a')```
-
--
-
 ## Description
 
 A true full stack developer not only runs the database and the website, but builds every part of their project. 
 
-If you do not turn the chess pieces on the lathe and solder the reed switches yourself, how can you ever claim full stack for just running the Raspberry Pi.
+If you do not turn the chess pieces on the lathe and solder the reed switches yourself, 
+how can you ever claim full stack for just running the Raspberry Pi.
 
 <br>
 
 ## This Project Includes: 
 
-> An Electrical Engineering component of wiring it all up
-
 > A Wood Working component with turning the pieces and building the board
 
-> A Software component with coding the brains on a Raspberry Pi Zero
+> An Electrical Engineering component of wiring and soldering it together
 
-> A back end component with the database of past games and running the website server on another Raspberry Pi (3B+)
+> A Software component with coding the logic of the board on a Raspberry Pi Zero
 
-> Front end componenet of building the website visuals
+> A Engine component of contributing the stockfish Python module to make it work for my purposes
 
 Now that's full stack
 
@@ -77,6 +57,7 @@ Now that's full stack
 
 ### Components
 
+- [Mastercraft 25W Soldering Iron](https://www.canadiantire.ca/en/pdp/mastercraft-25w-soldering-iron-0586305p.html)
 - [Raspberry Pi Zero W](https://www.canakit.com/raspberry-pi-zero-wireless.html)
 	- 16 GB MicroSD Card
 	- 2.5A Power Supply
@@ -86,57 +67,58 @@ Now that's full stack
 	- LED Bar
 	- LCD1602 Display
 	- RC522 RFID module
-- [Mastercraft 25W Soldering Iron](https://www.canadiantire.ca/en/pdp/mastercraft-25w-soldering-iron-0586305p.html)
-- [PCB Prototype Board](https://www.aliexpress.com/item/32588853051.html)
-- [Resisitors](https://www.aliexpress.com/item/32785425406.html)
-- [13.56MHZ RFID Tags](https://www.aliexpress.com/item/32898752493.html)
-- [Soldering Cable](https://www.aliexpress.com/item/32822880152.html)
-- [Switches](https://www.aliexpress.com/item/32990004998.html)
-- [Buttons](https://www.aliexpress.com/item/2024643496.html)
-- [MCP23017](https://www.aliexpress.com/item/32909314135.html)
+- 34 x [13.56MHZ RFID Tags](https://www.aliexpress.com/item/32898752493.html)
+- 3 x [Switches](https://www.aliexpress.com/item/32990004998.html)
+- 2 x [Buttons](https://www.aliexpress.com/item/2024643496.html)
+- 5 x [MCP23017](https://www.aliexpress.com/item/32909314135.html)
 - [TCA9548A](https://www.aliexpress.com/item/32648420655.html)
-- Neodymium Magnets
-- [Reed Switches](https://www.aliexpress.com/item/32801522211.html)
+- 34 x Neodymium Magnets
+- Various PCB Prototype Board
+- 10 x ___ ohms Resistors
+- Soldering Wires (Red, Black, White)
+- 64 x [Reed Switches](https://www.aliexpress.com/item/32801522211.html)
 
 
 <br>
 
 ### Circuitry
 
-Will go here
+First created and tested on breadboards, final soldering was done in this layout:
+
+Include layout here
 
 <br>
 
 ### Piece and Board creation
 
-Will go here
+Creating pieces and board explanation will go here
 
 <br>
 
-### Software
+### Python Modules
 
 ``` Python
 import string, time, os, datetime, sys
 import RPi.GPIO as GPIO
 ```
 
-Contributed: [Github](https://github.com/zhelyabuzhsky/stockfish)
+I contributed to make this work in my project: [Github](https://github.com/zhelyabuzhsky/stockfish)
 ``` Python
 from stockfish import Stockfish
 ```
 
-I built this
+I built this to run the 74HC595
 ``` Python
 import driver74HC595
 ```
 
-Editied from: [Github](https://github.com/the-raspberry-pi-guy/lcd)
+Editied from: [Github](https://github.com/the-raspberry-pi-guy/lcd) to run the LCD1602 display
 With accompanying [Video](https://www.youtube.com/watch?v=3XLjVChVgec)
 ``` Python
 import lcddriver
 ```
 
-Thank you to: [Github](https://github.com/pimylifeup/MFRC522-python)
+Used to run the MFRC522 RFID reader: [Github](https://github.com/pimylifeup/MFRC522-python)
 ``` Python
 from mfrc522 import SimpleMFRC522
 ```
