@@ -2,8 +2,8 @@ import string, time, os, datetime, sys, re
 import RPi.GPIO as GPIO
 from stockfish import Stockfish
 from mfrc522 import SimpleMFRC522
-import driver74HC595
-import lcddriver
+import pi74HC595
+from lcddriver import lcddriver
 
 
 def ischeck():
@@ -382,7 +382,6 @@ def updatepgn():  # REMADE
     args: None
     returns: None
     """
-
     data = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r").readlines()
 
     start = int(data[-1].split(".")[0])  # start index
@@ -514,7 +513,17 @@ def updateboard(algebraic):
 
         if player == "b":
             led.reverse()
-        LEDbar.setvalue(led)
+
+
+        if led[0] == 1:
+            GPIO.output(23, GPIO.HIGH)
+        else:
+            GPIO.output(23, GPIO.LOW)
+        if led[-1] == 1:
+            GPIO.output(24, GPIO.HIGH)
+        else:
+            GPIO.output(24, GPIO.LOW)
+        LEDbar.set_by_list(led[1:-1])
 
     except UnboundLocalError:
         # sometimes this breaks? so LED stays constant
@@ -725,7 +734,7 @@ def players(pin):
             ("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r"
         ).readlines()
     except FileNotFoundError:
-        if GPIO.input(29) == 1:  # Single player
+        if GPIO.input(5) == 1:  # Single player
             if player == "w":
                 white = "Player"
                 black = "Engine"
@@ -740,7 +749,7 @@ def players(pin):
     # if data[-1] == '\n':
     #    os.remove("../PGNs/" + date + "/Game" + str(round) + ".txt")
 
-    if GPIO.input(29) == 0:
+    if GPIO.input(5) == 0:
         if player == "w" and "Engine" in data[5]:
             data[5] = '[Black "' + black + ' -> Player"]\n'
             black = "Player"
@@ -774,16 +783,16 @@ def main():  # this should loop
         grid = togrid(fen[0])
 
         changed = False
-        GPIO.event_detected(31)  # clear detection
-        GPIO.event_detected(33)
+        GPIO.event_detected(6)  # clear detection
+        GPIO.event_detected(13)
         while True:
             break  # temp
             # Tracks board/reed switch movements
             # once player turn is determined
             # figure out what board/move makes sense from hardware
-            if GPIO.event_detected(33):
+            if GPIO.event_detected(13):
                 break
-            elif GPIO.event_detected(31):
+            elif GPIO.event_detected(6):
                 changed = True
                 rebuildpieces(grid)
                 break
@@ -817,6 +826,7 @@ def main():  # this should loop
 
         if not stockfish.is_move_correct("".join(move)):
             print("--------")
+            print("Not possible")
             print(grid)
             print(move)
             print("--------")
@@ -873,10 +883,10 @@ def gameover(result):
     saved.writelines(data)
     saved.close()
 
-    GPIO.event_detected(31)  # clear detection
+    GPIO.event_detected(6)  # clear detection
     LCD.update("     New Game ->", 2)
     while True:
-        if GPIO.event_detected(31):
+        if GPIO.event_detected(6):
             break
         time.sleep(0.1)
 
@@ -901,13 +911,13 @@ def newgame():
         player = "w"  # for now
 
         # sets Engine/Player
-        GPIO.event_detected(31)  # clear detection
+        GPIO.event_detected(6)  # clear detection
         LCD.update("Toggle Engine Switch", 1)
         LCD.update("     Continue ->", 2)
         while True:
             time.sleep(0.1)
-            if GPIO.event_detected(31):
-                if GPIO.input(29) == 1:  # Single player
+            if GPIO.event_detected(6):
+                if GPIO.input(5) == 1:  # Single player
                     if player == "w":
                         white = "Player"
                         black = "Engine"
@@ -923,21 +933,21 @@ def newgame():
         difficulty = 0
         if white == "Engine" or black == "Engine":
             time.sleep(0.2)
-            GPIO.event_detected(31)  # clear detection
-            GPIO.event_detected(33)
+            GPIO.event_detected(6)  # clear detection
+            GPIO.event_detected(13)
             LCD.update("Engine Level: " + str(difficulty + 1), 1)
             LCD.update("     Continue ->", 2)
             while white == "Engine" or black == "Engine":
                 time.sleep(0.05)
-                if GPIO.event_detected(33):
+                if GPIO.event_detected(13):
                     if difficulty != 9:
                         difficulty += 1
                     else:
                         difficulty = 0
                     LCD.update("Engine Level: " + str(difficulty + 1), 1)
                     time.sleep(0.1)
-                    GPIO.event_detected(33)  # clear detection
-                if GPIO.event_detected(31):
+                    GPIO.event_detected(13)  # clear detection
+                if GPIO.event_detected(6):
                     stockfish.set_skill_level(difficulty * 2)
                     if white == "Engine":
                         white = "Engine Level " + str(difficulty + 1)
@@ -967,7 +977,10 @@ def newgame():
         storedfens0 = []
         storedfides = []
 
-        LEDbar.setvalue([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
+
+        GPIO.output(23, GPIO.LOW)
+        GPIO.output(24, GPIO.HIGH)
+        LEDbar.set_by_list([0, 0, 0, 0, 1, 1, 1, 1])
 
         main()
 
@@ -1004,12 +1017,16 @@ def startup():
     """
     global date
     # switch for LED is hardware only (no software)
-    GPIO.setup(29, GPIO.IN)
-    GPIO.add_event_detect(29, GPIO.BOTH, callback=players)  # single/multi switch
-    GPIO.setup(31, GPIO.IN)
-    GPIO.add_event_detect(31, GPIO.RISING)  # Button 1
-    GPIO.setup(33, GPIO.IN)
-    GPIO.add_event_detect(33, GPIO.RISING)  # Button 2
+    GPIO.setup(23, GPIO.OUT) # For ends of LEDbar
+    GPIO.output(23, GPIO.LOW)
+    GPIO.setup(24, GPIO.OUT)
+    GPIO.output(24, GPIO.LOW)
+    GPIO.setup(5, GPIO.IN)
+    GPIO.add_event_detect(5, GPIO.BOTH, callback=players)  # single/multi switch
+    GPIO.setup(6, GPIO.IN)
+    GPIO.add_event_detect(6, GPIO.RISING)  # Button 1
+    GPIO.setup(13, GPIO.IN)
+    GPIO.add_event_detect(13, GPIO.RISING)  # Button 2
     # detect 5 and 6 not being connected due to switch
     date = datetime.datetime.now().strftime("%Y.%m.%d")
     if "PGNs" not in os.listdir(".."):
@@ -1021,10 +1038,10 @@ def startup():
 
 
 GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BOARD)
+GPIO.setmode(GPIO.BCM)
 alphabet = list(string.ascii_lowercase)
 LCD = lcddriver.lcd()
-LEDbar = driver74HC595.the74HC595()
+LEDbar = pi74HC595.pi74HC595(17, 27, 22)
 RFID = SimpleMFRC522()
 stockfish = Stockfish("/home/pi/full-stack-chessboard/stockfish", 1)
 

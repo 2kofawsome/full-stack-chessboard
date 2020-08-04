@@ -67,16 +67,15 @@ Now that's full stack
 	- LED Bar
 	- LCD1602 Display
 	- RC522 RFID module
-- 34 x [13.56MHZ RFID Tags](https://www.aliexpress.com/item/32898752493.html)
+- 34 x [20mm 13.56MHZ RFID Tags](https://www.aliexpress.com/item/32898752493.html)
 - 3 x [Switches](https://www.aliexpress.com/item/32990004998.html)
 - 2 x [Buttons](https://www.aliexpress.com/item/2024643496.html)
-- 5 x [MCP23017](https://www.aliexpress.com/item/32909314135.html)
-- [TCA9548A](https://www.aliexpress.com/item/32648420655.html)
+- 4 x [MCP23017](https://www.aliexpress.com/item/32909314135.html)
 - 34 x Neodymium Magnets
 - Various PCB Prototype Board
 - 10 x ___ ohms Resistors
 - Soldering Wires (Red, Black, White)
-- 64 x [Reed Switches](https://www.aliexpress.com/item/32801522211.html)
+- 64 x Reed Switches
 
 
 <br>
@@ -98,7 +97,7 @@ Creating pieces and board explanation will go here
 ### Python Modules
 
 ``` Python
-import string, time, os, datetime, sys
+import string, time, os, datetime, sys, re
 import RPi.GPIO as GPIO
 ```
 
@@ -107,9 +106,9 @@ I contributed to make this work in my project: [Github](https://github.com/zhely
 from stockfish import Stockfish
 ```
 
-I built this to run the 74HC595
+I built this to run the 74HC595 [Github](https://github.com/2kofawsome/pi74HC595) [PyPI](https://pypi.org/project/pi74HC595/)
 ``` Python
-import driver74HC595
+import pi74HC595
 ```
 
 Editied from: [Github](https://github.com/the-raspberry-pi-guy/lcd) to run the LCD1602 display
@@ -119,6 +118,11 @@ import lcddriver
 ```
 
 Used to run the MFRC522 RFID reader: [Github](https://github.com/pimylifeup/MFRC522-python)
+``` Python
+from mfrc522 import SimpleMFRC522
+```
+
+Used to run the MCP23017s: [Github](https://github.com/adafruit/Adafruit_CircuitPython_MCP230xx)
 ``` Python
 from mfrc522 import SimpleMFRC522
 ```
