@@ -5,6 +5,8 @@ from mfrc522 import SimpleMFRC522
 import pi74HC595
 from lcddriver import lcddriver
 
+import board, busio
+from adafruit_mcp230xx.mcp23017 import MCP23017
 
 def ischeck():
     """
@@ -787,9 +789,17 @@ def main():  # this should loop
         GPIO.event_detected(13)
         while True:
             break  # temp
+
+
+            for n in pins:
+                print(pins[n].value)
+
             # Tracks board/reed switch movements
             # once player turn is determined
             # figure out what board/move makes sense from hardware
+
+
+
             if GPIO.event_detected(13):
                 break
             elif GPIO.event_detected(6):
@@ -1035,8 +1045,6 @@ def startup():
         os.makedirs("../PGNs/" + date)
 
     newgame()
-
-
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 alphabet = list(string.ascii_lowercase)
@@ -1044,6 +1052,15 @@ LCD = lcddriver.lcd()
 LEDbar = pi74HC595.pi74HC595(17, 27, 22)
 RFID = SimpleMFRC522()
 stockfish = Stockfish("/home/pi/full-stack-chessboard/stockfish", 1)
+i2c = busio.I2C(board.SCL, board.SDA)
+mcp = MCP23017(i2c)  # 0 - 15
+pins = []
+#for add in [0x20, 0x21, 0x22, 0x24]:
+for add in [0x20]:
+    mcp = MCP23017(i2c, address=add)
+    for n in range(16):
+        pins.append(mcp.get_pin(n))
+
 
 try:
     time.sleep(1)
