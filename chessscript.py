@@ -4,6 +4,7 @@ from stockfish import Stockfish
 from mfrc522 import SimpleMFRC522
 import pi74HC595
 from lcddriver import lcddriver
+from subprocess import call
 
 import board, busio
 from adafruit_mcp230xx.mcp23017 import MCP23017
@@ -722,7 +723,6 @@ def rebuildpieces(grid):
 
     rebuildpgn(" ".join(fen))
 
-
 def players(pin):
     """
     Cleans up hardware, edits game saves, turns off system safely
@@ -995,7 +995,7 @@ def newgame():
         main()
 
 
-def boardoff():
+def boardoff(pin):
     """
     Cleans up hardware, edits game saves, turns off system safely
 
@@ -1003,19 +1003,26 @@ def boardoff():
     returns: None
     """
     # LCD.clear() Runs in other process
-    data = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r").readlines()
-    if data[6] == '[Result "*"]\n':
-        data.insert(7, '[Termination "abandoned"]\n')
-        saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "w")
-        saved.writelines(data)
-        saved.close()
-    if data[-1] == "1. ":
-        os.remove("../PGNs/" + date + "/Game" + str(round) + ".txt")
+    try:
+        data = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r").readlines()
+        if data[6] == '[Result "*"]\n':
+            data.insert(7, '[Termination "abandoned"]\n')
+            saved = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "w")
+            saved.writelines(data)
+            saved.close()
+        if data[-1] == "1. ":
+            os.remove("../PGNs/" + date + "/Game" + str(round) + ".txt")
+    except (FileNotFoundError, NameError):
+        pass
 
     LEDbar.clear()
     GPIO.cleanup()
 
+    #time.sleep(5)
+    #call("sudo shutdown -h now", shell=True)
+    sys.exit()
     # will also shutdown raspberry pi
+
 
 
 def startup():
@@ -1045,8 +1052,11 @@ def startup():
         os.makedirs("../PGNs/" + date)
 
     newgame()
+
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
+GPIO.setup(26, GPIO.IN)
+GPIO.add_event_detect(26, GPIO.RISING, callback=boardoff)  # single/multi switch
 alphabet = list(string.ascii_lowercase)
 LCD = lcddriver.lcd()
 LEDbar = pi74HC595.pi74HC595(17, 27, 22)
@@ -1065,5 +1075,5 @@ for add in [0x20]:
 try:
     time.sleep(1)
     startup()
-except KeyboardInterrupt:
-    boardoff()
+except (KeyboardInterrupt, OSError):
+    boardoff(0)

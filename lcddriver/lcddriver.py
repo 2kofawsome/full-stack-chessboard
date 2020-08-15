@@ -174,7 +174,7 @@ class lcd:
                         else:
                             continue
                         break
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, OSError, BrokenPipeError):
             self.clear()
 
     def update(self, string, line):

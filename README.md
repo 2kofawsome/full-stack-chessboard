@@ -124,7 +124,8 @@ from mfrc522 import SimpleMFRC522
 
 Used to run the MCP23017s: [Github](https://github.com/adafruit/Adafruit_CircuitPython_MCP230xx)
 ``` Python
-from mfrc522 import SimpleMFRC522
+import board, busio
+from adafruit_mcp230xx.mcp23017 import MCP23017
 ```
 
 <br>
