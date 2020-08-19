@@ -924,6 +924,8 @@ def newgame():
         GPIO.event_detected(6)  # clear detection
         LCD.update("Toggle Engine Switch", 1)
         LCD.update("     Continue ->", 2)
+
+
         while True:
             time.sleep(0.1)
             if GPIO.event_detected(6):
@@ -1002,6 +1004,7 @@ def boardoff(pin):
     args: None
     returns: None
     """
+    GPIO.remove_event_detect(26)
     # LCD.clear() Runs in other process
     try:
         data = open(("../PGNs/" + date + "/Game" + str(round) + ".txt"), "r").readlines()
@@ -1014,12 +1017,16 @@ def boardoff(pin):
             os.remove("../PGNs/" + date + "/Game" + str(round) + ".txt")
     except (FileNotFoundError, NameError):
         pass
-
+    try:
+        GPIO.output(23, GPIO.LOW)
+        GPIO.output(24, GPIO.LOW)
+    except RuntimeError:
+        pass
     LEDbar.clear()
+    time.sleep(2)
+    LCD.clear()
     GPIO.cleanup()
-
-    #time.sleep(5)
-    #call("sudo shutdown -h now", shell=True)
+    call("sudo shutdown -h now", shell=True)
     sys.exit()
     # will also shutdown raspberry pi
 
@@ -1056,7 +1063,7 @@ def startup():
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(26, GPIO.IN)
-GPIO.add_event_detect(26, GPIO.RISING, callback=boardoff)  # single/multi switch
+GPIO.add_event_detect(26, GPIO.FALLING, callback=boardoff)  # single/multi switch
 alphabet = list(string.ascii_lowercase)
 LCD = lcddriver.lcd()
 LEDbar = pi74HC595.pi74HC595(17, 27, 22)
@@ -1072,8 +1079,4 @@ for add in [0x20]:
         pins.append(mcp.get_pin(n))
 
 
-try:
-    time.sleep(1)
-    startup()
-except (KeyboardInterrupt, OSError):
-    boardoff(0)
+startup()

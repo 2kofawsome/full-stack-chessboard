@@ -17,27 +17,19 @@
 - Wait for more packages to arrive in the mail!
 
 - Choose side you play as
- 
-- Reed Switch layout
 
 - Detect Piece movements
 
-- RFID stuff
+- RFID error testing
 
 - Pieces to middle to resign/draw
-
-- Turn on on startup
-
-- Turn off on power down
 
 <br>
 
 ## Description
 
-A true full stack developer not only runs the database and the website, but builds every part of their project. 
-
 If you do not turn the chess pieces on the lathe and solder the reed switches yourself, 
-how can you ever claim full stack for just running the Raspberry Pi.
+how can you ever claim full stack for just setting up frontend and backend.
 
 <br>
 
@@ -49,7 +41,8 @@ how can you ever claim full stack for just running the Raspberry Pi.
 
 > A Software component with coding the logic of the board on a Raspberry Pi Zero
 
-> A Engine component of contributing the stockfish Python module to make it work for my purposes
+While I had more experience in some (Software) than others (Wood Working), 
+each took a tremendous amount of time to accomplish the parts necessary for this project.
 
 Now that's full stack
 
@@ -67,6 +60,8 @@ Now that's full stack
 	- LED Bar
 	- LCD1602 Display
 	- RC522 RFID module
+	- 1N4001 Diode
+	
 - 34 x [20mm 13.56MHZ RFID Tags](https://www.aliexpress.com/item/32898752493.html)
 - 3 x [Switches](https://www.aliexpress.com/item/32990004998.html)
 - 2 x [Buttons](https://www.aliexpress.com/item/2024643496.html)
@@ -74,6 +69,7 @@ Now that's full stack
 - 34 x Neodymium Magnets
 - Various PCB Prototype Board
 - 10 x ___ ohms Resistors
+- 64 x 1K ohms Resistors
 - Soldering Wires (Red, Black, White)
 - 64 x Reed Switches
 
@@ -95,6 +91,8 @@ Creating pieces and board explanation will go here
 <br>
 
 ### Python Modules
+
+Take a look at the code for full details, but here is a brief overview of the modules I used/created for the project.
 
 ``` Python
 import string, time, os, datetime, sys, re
@@ -132,10 +130,14 @@ from adafruit_mcp230xx.mcp23017 import MCP23017
 
 ## Engine
 
+The engine ended up being a fair bit of effort to get working since the Python module 
+[Stockfish](https://github.com/zhelyabuzhsky/stockfish) needed some changes to make it work how I wanted.
+
 <details>
  <summary><a href="https://stockfishchess.org/download/"> Stockfish Download </a></summary>
  
 ```
+
 Compiled by running "sudo make -j4 profile-build ARCH=armv7 LDFLAGS="-latomic -lpthread -lgcov" on the source code
 ```
 </details>

@@ -84,8 +84,8 @@ class lcd:
         self.lcd_write(LCD_ENTRYMODESET | LCD_ENTRYLEFT)
         sleep(0.2)
 
-        p1 = Process(target=self.loop)
-        p1.start()
+        self.process = Process(target=self.loop)
+        self.process.start()
 
     # clocks EN to latch command
     def lcd_strobe(self, data):
@@ -121,6 +121,8 @@ class lcd:
     def clear(self):
         self.lcd_write(LCD_CLEARDISPLAY)
         self.lcd_write(LCD_RETURNHOME)
+        self.process.terminate()
+        self.process.join()
 
     def loop(self):
         """
@@ -130,8 +132,8 @@ class lcd:
       Returns: None
 
       """
-        try:
-            while True:
+        while True:
+            try:
 
                 line1 = self.lines.one
                 line2 = self.lines.two
@@ -174,8 +176,9 @@ class lcd:
                         else:
                             continue
                         break
-        except (KeyboardInterrupt, OSError, BrokenPipeError):
-            self.clear()
+            except (BrokenPipeError):
+                #self.clear()
+                pass
 
     def update(self, string, line):
         """
