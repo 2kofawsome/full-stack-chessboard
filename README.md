@@ -1,35 +1,16 @@
 
 <p>
     <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.6+-blue.svg" alt="Python version" height="17"></a>
-    <a href="https://github.com/psf/black">
-        <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Codestyle Black" height="17">
-    </a>
+	<a href="https://github.com/2kofawsome/pi74HC595/blob/master/LICENSE"><img src="https://img.shields.io/github/license/2kofawsome/pi74HC595" alt="License" height="18"></a>
 </p>
 
 # full-stack-chessboard
 
-### Next Tasks:
-
-- Pre-RFID ask for "w" or "b" turn
-
-<hr>
-
-- Wait for more packages to arrive in the mail!
-
-- Choose side you play as
-
-- Detect Piece movements
-
-- RFID error testing
-
-- Pieces to middle to resign/draw
-
-<br>
-
 ## Description
 
-If you do not turn the chess pieces on the lathe and solder the reed switches yourself, 
-how can you ever claim full stack for just setting up frontend and backend.
+A chessboard with built in piece detection and Stockfish engine. 
+From turning the pieces on a lathe, to soldering the components, to coding the Raspberry Pi. 
+This is true full stack development.
 
 <br>
 
@@ -48,45 +29,38 @@ Now that's full stack
 
 <br>
 
-### Components
-
-- [Mastercraft 25W Soldering Iron](https://www.canadiantire.ca/en/pdp/mastercraft-25w-soldering-iron-0586305p.html)
-- [Raspberry Pi Zero W](https://www.canakit.com/raspberry-pi-zero-wireless.html)
-	- 16 GB MicroSD Card
-	- 2.5A Power Supply
-- [2x20-pin Male Header](https://www.amazon.ca/gp/product/B0756KM7CY/ref=ppx_yo_dt_b_asin_title_o01_s00?ie=UTF8&psc=1)
-- [Freenove RFID Starter Kit](https://www.amazon.ca/gp/product/B06VTH7L28/ref=ppx_yo_dt_b_asin_title_o04_s00?ie=UTF8&psc=1)
-	- 74HC595
-	- LED Bar
-	- LCD1602 Display
-	- RC522 RFID module
-	- 1N4001 Diode
-	
-- 34 x [20mm 13.56MHZ RFID Tags](https://www.aliexpress.com/item/32898752493.html)
-- 3 x [Switches](https://www.aliexpress.com/item/32990004998.html)
-- 2 x [Buttons](https://www.aliexpress.com/item/2024643496.html)
-- 4 x [MCP23017](https://www.aliexpress.com/item/32909314135.html)
-- 34 x Neodymium Magnets
-- Various PCB Prototype Board
-- 10 x ___ ohms Resistors
-- 64 x 1K ohms Resistors
-- Soldering Wires (Red, Black, White)
-- 64 x Reed Switches
-
-
-<br>
-
 ### Circuitry
 
-First created and tested on breadboards, final soldering was done in this layout:
-
-Include layout here
+First created and tested on breadboards, final soldering was done in this layout (created using KiCAD):
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/1-1.jpg)  | 
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/1-2.jpg) 
+With the boards (pre-soldering):
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/2-1.jpg)  | 
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/2-2.jpg)  | 
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/2-3.jpg)  |
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/2-4.jpg)  
+In the general layout (pre-soldering, pre-wires):
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/3-1.jpg)  | 
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/3-2.jpg) 
+And the layout of the reed switches was (pre-soldering):
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/4-1.jpg)  | 
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/4-2.jpg) 
 
 <br>
 
 ### Piece and Board creation
 
-Creating pieces and board explanation will go here
+Thank you to Paul (Grandpa) for buiding the board for me:
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/5-1.jpg)  | 
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/5-2.jpg) 
+And for building the pieces with me (first time on a lathe!):
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/6-1.jpg)  | 
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/6-2.jpg) 
+Pieces contain magnets (for reed switches) and RFID chips (for scanning):
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/7-1.jpg)  | 
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/7-2.jpg)  | 
+![Raspberry Pi Pinout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/7-3.jpg) 
+
 
 <br>
 
@@ -133,17 +107,47 @@ from adafruit_mcp230xx.mcp23017 import MCP23017
 The engine ended up being a fair bit of effort to get working since the Python module 
 [Stockfish](https://github.com/zhelyabuzhsky/stockfish) needed some changes to make it work how I wanted.
 
-<details>
- <summary><a href="https://stockfishchess.org/download/"> Stockfish Download </a></summary>
+And the engine itself here: <a href="https://stockfishchess.org/download/"> Stockfish Download </a>
  
 ```
-
 Compiled by running "sudo make -j4 profile-build ARCH=armv7 LDFLAGS="-latomic -lpthread -lgcov" on the source code
 ```
 </details>
 
 <br>
 
-### Credits
+
+### Components
+
+- [Mastercraft 25W Soldering Iron](https://www.canadiantire.ca/en/pdp/mastercraft-25w-soldering-iron-0586305p.html)
+- [Raspberry Pi Zero W](https://www.canakit.com/raspberry-pi-zero-wireless.html)
+	- 16 GB MicroSD Card
+	- 2.5A Power Supply
+- [2x20-pin Male Header](https://www.amazon.ca/gp/product/B0756KM7CY/)
+- [Freenove RFID Starter Kit](https://www.amazon.ca/gp/product/B06VTH7L28/)
+	- 74HC595
+	- LED Bar
+	- LCD1602 Display
+	- RC522 RFID module
+	- 1N4001 Diode
+	- 28 Male-to-Female Wires
+- 32 x [20mm 13.56MHZ RFID Tags](https://www.aliexpress.com/item/32898752493.html)
+- 3 x [Switches](https://www.aliexpress.com/item/32990004998.html)
+- 2 x [Buttons](https://www.aliexpress.com/item/2024643496.html)
+- 4 x [MCP23017](https://www.aliexpress.com/item/32909314135.html)
+- 32 x Neodymium Magnets
+- Various PCB Prototype Boards
+- 10 x 220 ohms Resistors
+- 4 x 1K ohms Resistors
+- 68 x 10K ohms Resistors
+- [22 Gauge Multicolour Wires](https://www.amazon.ca/gp/product/B0791BNDY2/)
+- 64 x Reed Switches
+
+<br>
+
+## Credits
 
 - [Sam Gunter](https://github.com/2kofawsome)
+
+## License
+MIT License. Please see [License File](LICENSE) for more information.
