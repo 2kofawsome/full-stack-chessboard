@@ -39,9 +39,11 @@ First created and tested on breadboards, final soldering was done in this layout
 With the boards (pre-soldering):
 ![MCP23017s](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/2-1.jpg)  | ![Pi Extender](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/2-2.jpg)  | ![LEDbar - Front](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/2-3.jpg)  |![LEDbar - Back](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/2-4.jpg)  
 :-------------------------:|:-------------------------:|:-------------------------:|:-------------------------:
+
 In the general layout (pre-soldering, pre-wires):
 ![Pieces and Layout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/3-1.jpg)  | ![Layout](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/3-2.jpg) 
 :-------------------------:|:-------------------------:
+
 And the layout of the reed switches was (pre-soldering):
 ![Lid w/o Top](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/4-1.jpg)  | ![Lid w/ Top](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/4-2.jpg) 
 :-------------------------:|:-------------------------:
@@ -54,9 +56,11 @@ Thank you to Paul (Grandpa) for buiding the board for me:
 
 ![Board - Back](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/5-1.jpg)  | ![Board - Shelf](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/5-2.jpg) 
 :-------------------------:|:-------------------------:
+
 And for building the pieces with me (first time on a lathe!):
 ![Board - Overhead](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/6-1.jpg)  | ![Board - Front](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/6-2.jpg) 
 :-------------------------:|:-------------------------:
+
 Pieces contain magnets for reed switches (top) and RFID chips for scanning (bottom):
 ![Piece - Front](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/7-1.jpg)  | ![Piece Magnet RFID](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/7-2.jpg)  | ![Piece - Bottom](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/7-3.jpg) 
 :-------------------------:|:-------------------------:|:-------------------------:
