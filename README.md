@@ -32,8 +32,7 @@ Now that's full stack
 ### Circuitry
 
 First created and tested on breadboards, final soldering was done in this layout (created using KiCAD):
-![BW Schematics](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/1-1.jpg) 
-![Colour Schematics](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/1-2.jpg) 
+![Schematics](https://raw.githubusercontent.com/2kofawsome/full-stack-chessboard/master/READMEimages/1-2.jpg) 
 
 
 With the boards (pre-soldering):
